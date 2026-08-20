@@ -54,6 +54,15 @@
     padding:10px 12px;border-radius:0 10px 10px 0;font-size:14px;color:var(--muted);margin-bottom:12px}
   .key{display:inline-block;font-size:12px;font-weight:700;color:var(--accent);
     border:1px solid var(--accent);border-radius:999px;padding:2px 9px;margin-bottom:8px}
+  .setup{background:rgba(228,120,79,.07);border:1px dashed var(--line);
+    border-radius:12px;padding:10px 12px;margin-bottom:12px;font-size:14px}
+  .setup b{display:block;margin-bottom:4px;font-size:13px;color:var(--muted);
+    text-transform:uppercase;letter-spacing:.04em}
+  .setup ul{margin:0;padding-left:18px}
+  .setup li{margin-bottom:4px}
+  .addnote{margin-top:10px;width:100%;padding:11px;border-radius:12px;
+    border:1px dashed var(--line);background:transparent;color:var(--muted);
+    font-size:14px;font-family:inherit;cursor:pointer}
   .comment{margin-top:12px;display:none}
   .comment.show{display:block}
   .mic{margin-top:8px;display:flex;gap:8px;align-items:center}
@@ -73,6 +82,9 @@
   .done .em{font-size:40px}
   .who{font-size:13px;color:var(--muted);margin-top:10px;text-align:center}
   .who a{color:var(--muted)}
+  .intro{margin:0;padding-left:20px;font-size:15px;color:var(--ink)}
+  .intro li{margin-bottom:8px}
+  .intro b{font-weight:600}
   .hidden{display:none}
 </style>
 </head>
@@ -83,6 +95,21 @@
     <h1>Альфа-тест сборки 105</h1>
     <p class="sub">Тридцать минут, всё сохраняется само. Можно закрыть и вернуться
        с любого устройства — просто введи тот же ник.</p>
+    <div class="card">
+      <label>Как это устроено</label>
+      <ul class="intro">
+        <li><b>Заводи тестовые дела, свои не трогай.</b> Почти в каждом пункте
+            написано, что подготовить: дела и лекарства с приставкой «Тест».
+            Так проверка не сломает твой настоящий план.</li>
+        <li><b>В конце всё тестовое можно удалить</b> — оно больше не нужно.</li>
+        <li><b>Кнопки три:</b> ✅ работает · ❌ сломалось · 🤷 пропущу.
+            «Пропущу» — нормальный ответ: значит пункт непонятен или у тебя
+            нет такого раздела. Нам это тоже важно знать.</li>
+        <li><b>Комментарий можно оставить к любому пункту</b>, даже когда всё
+            работает — и написать, и наговорить голосом.</li>
+        <li><b>Ничего отправлять не надо.</b> Каждое нажатие уже сохранено.</li>
+      </ul>
+    </div>
     <div class="card">
       <label for="nick">Твой ник в Телеграме</label>
       <input type="text" id="nick" placeholder="@nickname" autocomplete="username"
@@ -106,6 +133,14 @@
       <div class="txt"><span id="progress">0 из 0</span><span id="whoami"></span></div>
     </div>
     <div id="list"></div>
+    <div class="card" id="general">
+      <label for="gen">Что ещё заметила?</label>
+      <p class="sub" style="margin:0 0 10px">Всё, что не попало в пункты: что
+         раздражает, что непонятно, что просто хочется сказать.</p>
+      <textarea id="genArea" placeholder="Своими словами — или голосом"></textarea>
+      <div class="mic"><button type="button" id="genMic">🎤 Наговорить</button>
+        <span class="hint">Расшифруем сами</span></div>
+    </div>
     <div class="card done" id="finish">
       <div class="em">🫧</div>
       <h3 style="margin:8px 0">Спасибо!</h3>
@@ -203,6 +238,7 @@
         list.appendChild(card(item));
       });
     });
+    setupGeneral();
     updateProgress();
   }
 
@@ -213,7 +249,13 @@
 
     var html = '';
     if (item.key) html += '<span class="key">важный пункт</span>';
-    html += '<h3>' + esc(item.title) + '</h3><ol class="steps">';
+    html += '<h3>' + esc(item.title) + '</h3>';
+    if (item.setup && item.setup.length){
+      html += '<div class="setup"><b>Что подготовить</b><ul>';
+      item.setup.forEach(function(s){ html += '<li>' + esc(s) + '</li>'; });
+      html += '</ul></div>';
+    }
+    html += '<ol class="steps">';
     item.steps.forEach(function(s){ html += '<li>' + esc(s) + '</li>'; });
     html += '</ol>';
     html += '<div class="expect"><b>Должно быть:</b> ' + esc(item.expect) + '</div>';
@@ -223,7 +265,11 @@
       + btn('fail', '❌', 'Сломалось')
       + btn('skip', '🤷', 'Пропущу')
       + '</div>';
-    html += '<div class="comment"><label>Что случилось?</label>'
+    // Комментарий доступен ВСЕГДА, а не только на «Сломалось»: человеку есть
+    // что сказать и когда всё работает («работает, но неудобно»), и это ровно
+    // тот отзыв, который иначе никуда не попадёт.
+    html += '<button type="button" class="addnote">💬 Добавить комментарий</button>';
+    html += '<div class="comment"><label>Что скажешь?</label>'
       + '<textarea placeholder="Своими словами — что сделала и что увидела"></textarea>'
       + '<div class="mic"><button type="button">🎤 Наговорить</button>'
       + '<span class="hint">Можно голосом — расшифруем сами</span></div></div>';
@@ -232,15 +278,29 @@
     var buttons = d.querySelectorAll('.st');
     var box = d.querySelector('.comment');
     var area = d.querySelector('textarea');
-    if (saved.comment) area.value = saved.comment;
+    var addNote = d.querySelector('.addnote');
+    addNote.onclick = function(){
+      box.classList.add('show');
+      addNote.style.display = 'none';
+      area.focus();
+    };
+    if (saved.comment){
+      area.value = saved.comment;
+      box.classList.add('show');
+      addNote.style.display = 'none';
+    }
     if (saved.status) markStatus(buttons, box, saved.status);
+    if (box.classList.contains('show')) addNote.style.display = 'none';
 
     for (var i = 0; i < buttons.length; i++){
       (function(b){
         b.onclick = function(){
           markStatus(buttons, box, b.dataset.st);
           save(item.id, b.dataset.st, area.value);
-          if (b.dataset.st === 'fail') setTimeout(function(){ area.focus(); }, 120);
+          if (b.dataset.st === 'fail'){
+            if (addNote) addNote.style.display = 'none';
+            setTimeout(function(){ area.focus(); }, 120);
+          }
         };
       })(buttons[i]);
     }
@@ -256,6 +316,21 @@
     return d;
   }
 
+  // Общий комментарий хранится как обычный пункт с особым id — тогда он
+  // ложится в ту же таблицу и виден в том же запросе, что и остальные.
+  var GENERAL = '__general__';
+  function setupGeneral(){
+    var area = el('genArea');
+    var saved = state.answers[GENERAL];
+    if (saved && saved.comment) area.value = saved.comment;
+    var t;
+    area.oninput = function(){
+      clearTimeout(t);
+      t = setTimeout(function(){ save(GENERAL, 'skip', area.value); }, 900);
+    };
+    setupMic(el('genMic'), area, GENERAL);
+  }
+
   function btn(st, em, label){
     return '<button type="button" class="st" data-st="' + st + '">'
       + '<span class="em">' + em + '</span>' + label + '</button>';
@@ -267,7 +342,9 @@
       b.classList.remove('on-pass','on-fail','on-skip');
       if (b.dataset.st === st) b.classList.add('on-' + st);
     }
-    box.classList.toggle('show', st === 'fail');
+    // «Сломалось» раскрывает поле само — рассказать надо обязательно.
+    // Но обратно НЕ прячем: человек мог уже начать писать.
+    if (st === 'fail') box.classList.add('show');
   }
 
   function save(itemId, status, comment){
@@ -287,11 +364,16 @@
 
   function updateProgress(){
     var done = 0;
-    for (var k in state.answers){ if (state.answers[k] && state.answers[k].status) done++; }
+    for (var k in state.answers){
+      if (k === GENERAL) continue;
+      if (state.answers[k] && state.answers[k].status) done++;
+    }
     el('progress').textContent = done + ' из ' + state.total;
     el('fill').style.width = state.total ? (done * 100 / state.total) + '%' : '0%';
     var fails = 0;
-    for (var k2 in state.answers){ if (state.answers[k2].status === 'fail') fails++; }
+    for (var k2 in state.answers){
+      if (k2 !== GENERAL && state.answers[k2].status === 'fail') fails++;
+    }
     el('finishText').textContent = done >= state.total && state.total > 0
       ? ('Прошла всё. Нашла проблем: ' + fails + '. Мы уже видим твои ответы — отправлять ничего не нужно.')
       : ('Можно закрыть в любой момент: ' + done + ' из ' + state.total + ' уже сохранено.');
