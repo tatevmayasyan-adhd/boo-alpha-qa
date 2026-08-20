@@ -1,0 +1,365 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Альфа-тест Бу · сборка 105</title>
+<style>
+  :root{
+    --bg:#F6F1E7; --card:#FFFDF8; --ink:#2E2A25; --muted:#8A8177;
+    --line:#E7DECF; --accent:#E4784F; --ok:#7FA37A; --skip:#B0AA9F;
+    --radius:18px; --shadow:0 2px 10px rgba(60,48,32,.06);
+  }
+  @media (prefers-color-scheme: dark){
+    :root{ --bg:#1D1B18; --card:#26231F; --ink:#F1EBE1; --muted:#A79E92;
+           --line:#39342D; --shadow:0 2px 10px rgba(0,0,0,.3); }
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font:16px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left)}
+  .wrap{max-width:720px;margin:0 auto;padding:16px 16px 80px}
+  h1{font-size:22px;margin:0 0 4px}
+  .sub{color:var(--muted);font-size:14px;margin-bottom:20px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);
+    padding:18px;margin-bottom:14px;box-shadow:var(--shadow)}
+  label{display:block;font-weight:600;margin-bottom:8px}
+  input[type=text],textarea{width:100%;padding:14px;border:1px solid var(--line);
+    border-radius:14px;background:var(--bg);color:var(--ink);font-size:16px;font-family:inherit}
+  textarea{min-height:90px;resize:vertical}
+  .row{display:flex;gap:10px;flex-wrap:wrap}
+  .btn{flex:1;min-width:120px;padding:15px 12px;border-radius:14px;border:1px solid var(--line);
+    background:var(--card);color:var(--ink);font-size:16px;font-weight:600;cursor:pointer;
+    -webkit-tap-highlight-color:transparent;transition:transform .06s ease}
+  .btn:active{transform:scale(.98)}
+  .btn.primary{background:var(--accent);color:#fff;border-color:transparent}
+  .btn.big{font-size:17px;padding:17px}
+  .plat{flex:1;padding:18px;border-radius:14px;border:2px solid var(--line);background:var(--card);
+    font-size:17px;font-weight:600;cursor:pointer}
+  .plat.on{border-color:var(--accent);background:rgba(228,120,79,.08)}
+  .st{flex:1;min-width:0;padding:13px 6px;border-radius:14px;border:2px solid var(--line);
+    background:var(--card);color:var(--ink);font-size:14px;font-weight:600;cursor:pointer;
+    -webkit-tap-highlight-color:transparent}
+  .st .em{display:block;font-size:20px;margin-bottom:2px}
+  .st.on-pass{border-color:var(--ok);background:rgba(127,163,122,.12)}
+  .st.on-fail{border-color:var(--accent);background:rgba(228,120,79,.12)}
+  .st.on-skip{border-color:var(--skip);background:rgba(176,170,159,.15)}
+  .sec{margin:26px 0 10px;font-size:18px;font-weight:700}
+  .item h3{margin:0 0 10px;font-size:17px;line-height:1.35}
+  .steps{margin:0 0 12px;padding-left:20px;color:var(--ink)}
+  .steps li{margin-bottom:5px}
+  .expect{background:rgba(127,163,122,.10);border-left:3px solid var(--ok);
+    padding:10px 12px;border-radius:0 10px 10px 0;font-size:15px;margin-bottom:8px}
+  .flag{background:rgba(228,120,79,.10);border-left:3px solid var(--accent);
+    padding:10px 12px;border-radius:0 10px 10px 0;font-size:14px;color:var(--muted);margin-bottom:12px}
+  .key{display:inline-block;font-size:12px;font-weight:700;color:var(--accent);
+    border:1px solid var(--accent);border-radius:999px;padding:2px 9px;margin-bottom:8px}
+  .comment{margin-top:12px;display:none}
+  .comment.show{display:block}
+  .mic{margin-top:8px;display:flex;gap:8px;align-items:center}
+  .mic button{padding:12px 16px;border-radius:12px;border:1px solid var(--line);
+    background:var(--card);color:var(--ink);font-size:15px;cursor:pointer}
+  .mic button.rec{background:var(--accent);color:#fff;border-color:transparent}
+  .mic .hint{font-size:13px;color:var(--muted)}
+  .bar{position:sticky;top:0;z-index:5;background:var(--bg);padding:10px 0 8px;margin-bottom:6px}
+  .bar .track{height:8px;background:var(--line);border-radius:999px;overflow:hidden}
+  .bar .fill{height:100%;width:0;background:var(--accent);transition:width .25s ease}
+  .bar .txt{font-size:13px;color:var(--muted);margin-top:6px;display:flex;justify-content:space-between}
+  .saved{position:fixed;left:50%;transform:translateX(-50%);bottom:20px;background:var(--ink);
+    color:var(--bg);padding:10px 18px;border-radius:999px;font-size:14px;opacity:0;
+    transition:opacity .2s ease;pointer-events:none;z-index:10}
+  .saved.show{opacity:.92}
+  .done{text-align:center;padding:26px 18px}
+  .done .em{font-size:40px}
+  .who{font-size:13px;color:var(--muted);margin-top:10px;text-align:center}
+  .who a{color:var(--muted)}
+  .hidden{display:none}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div id="gate">
+    <h1>Альфа-тест сборки 105</h1>
+    <p class="sub">Тридцать минут, всё сохраняется само. Можно закрыть и вернуться
+       с любого устройства — просто введи тот же ник.</p>
+    <div class="card">
+      <label for="nick">Твой ник в Телеграме</label>
+      <input type="text" id="nick" placeholder="@nickname" autocomplete="username"
+             autocapitalize="off" autocorrect="off" spellcheck="false">
+      <p class="sub" style="margin:8px 0 0">Нужен, чтобы мы могли тебя переспросить,
+         если что-то окажется важным.</p>
+    </div>
+    <div class="card">
+      <label>На чём проверяешь</label>
+      <div class="row">
+        <button class="plat" data-plat="ios" id="pl-ios">iPhone</button>
+        <button class="plat" data-plat="android" id="pl-android">Android</button>
+      </div>
+    </div>
+    <button class="btn primary big" id="start" style="width:100%">Начать</button>
+  </div>
+
+  <div id="app" class="hidden">
+    <div class="bar">
+      <div class="track"><div class="fill" id="fill"></div></div>
+      <div class="txt"><span id="progress">0 из 0</span><span id="whoami"></span></div>
+    </div>
+    <div id="list"></div>
+    <div class="card done" id="finish">
+      <div class="em">🫧</div>
+      <h3 style="margin:8px 0">Спасибо!</h3>
+      <p class="sub" id="finishText" style="margin:0"></p>
+    </div>
+    <p class="who">Ответы уже сохранены. <a href="#" id="switch">Сменить ник или платформу</a></p>
+  </div>
+
+</div>
+<div class="saved" id="saved">Сохранено</div>
+
+<script>
+(function(){
+  var API = 'https://nxabnmciearjxfdrlmpw.supabase.co/functions/v1/qa';
+  var state = { nick:'', platform:'', answers:{}, total:0 };
+
+  function api(path){ return API + path; }
+  function el(id){ return document.getElementById(id); }
+  function saveLocal(){
+    try{
+      localStorage.setItem('qa_nick', state.nick);
+      localStorage.setItem('qa_platform', state.platform);
+    }catch(e){}
+  }
+  function toast(text){
+    var s = el('saved'); s.textContent = text || 'Сохранено';
+    s.classList.add('show');
+    clearTimeout(s._t); s._t = setTimeout(function(){ s.classList.remove('show'); }, 1400);
+  }
+
+  // ── Вход ────────────────────────────────────────────────────────────────
+  function pickPlatform(p){
+    state.platform = p;
+    el('pl-ios').classList.toggle('on', p === 'ios');
+    el('pl-android').classList.toggle('on', p === 'android');
+  }
+  el('pl-ios').onclick = function(){ pickPlatform('ios'); };
+  el('pl-android').onclick = function(){ pickPlatform('android'); };
+
+  // Платформу угадываем сами — человеку остаётся только подтвердить.
+  var ua = navigator.userAgent || '';
+  pickPlatform(/android/i.test(ua) ? 'android' : 'ios');
+  try{
+    var savedNick = localStorage.getItem('qa_nick');
+    var savedPlat = localStorage.getItem('qa_platform');
+    if (savedNick) el('nick').value = '@' + savedNick;
+    if (savedPlat) pickPlatform(savedPlat);
+  }catch(e){}
+
+  el('start').onclick = function(){
+    var raw = (el('nick').value || '').trim().replace(/^@+/, '');
+    if (raw.length < 2){
+      el('nick').focus();
+      toast('Без ника не сможем переспросить');
+      return;
+    }
+    state.nick = raw;
+    saveLocal();
+    el('gate').classList.add('hidden');
+    el('app').classList.remove('hidden');
+    el('whoami').textContent = '@' + raw;
+    load();
+  };
+  el('switch').onclick = function(e){
+    e.preventDefault();
+    el('app').classList.add('hidden');
+    el('gate').classList.remove('hidden');
+  };
+
+  // ── Загрузка чек-листа и уже данных ответов ─────────────────────────────
+  function load(){
+    Promise.all([
+      fetch(api('/checklist?platform=' + state.platform)).then(function(r){ return r.json(); }),
+      fetch(api('/answers?platform=' + state.platform + '&nickname=' + encodeURIComponent(state.nick)))
+        .then(function(r){ return r.json(); })
+    ]).then(function(res){
+      state.answers = (res[1] && res[1].answers) || {};
+      render(res[0].sections || []);
+    }).catch(function(){
+      toast('Не получилось загрузить — проверь интернет');
+    });
+  }
+
+  function render(sections){
+    var list = el('list');
+    list.innerHTML = '';
+    state.total = 0;
+    sections.forEach(function(sec){
+      var h = document.createElement('div');
+      h.className = 'sec';
+      h.textContent = sec.emoji + '  ' + sec.title;
+      list.appendChild(h);
+      sec.items.forEach(function(item){
+        state.total++;
+        list.appendChild(card(item));
+      });
+    });
+    updateProgress();
+  }
+
+  function card(item){
+    var saved = state.answers[item.id] || {};
+    var d = document.createElement('div');
+    d.className = 'card item';
+
+    var html = '';
+    if (item.key) html += '<span class="key">важный пункт</span>';
+    html += '<h3>' + esc(item.title) + '</h3><ol class="steps">';
+    item.steps.forEach(function(s){ html += '<li>' + esc(s) + '</li>'; });
+    html += '</ol>';
+    html += '<div class="expect"><b>Должно быть:</b> ' + esc(item.expect) + '</div>';
+    if (item.redFlag) html += '<div class="flag">⚠ ' + esc(item.redFlag) + '</div>';
+    html += '<div class="row">'
+      + btn('pass', '✅', 'Работает')
+      + btn('fail', '❌', 'Сломалось')
+      + btn('skip', '🤷', 'Пропущу')
+      + '</div>';
+    html += '<div class="comment"><label>Что случилось?</label>'
+      + '<textarea placeholder="Своими словами — что сделала и что увидела"></textarea>'
+      + '<div class="mic"><button type="button">🎤 Наговорить</button>'
+      + '<span class="hint">Можно голосом — расшифруем сами</span></div></div>';
+    d.innerHTML = html;
+
+    var buttons = d.querySelectorAll('.st');
+    var box = d.querySelector('.comment');
+    var area = d.querySelector('textarea');
+    if (saved.comment) area.value = saved.comment;
+    if (saved.status) markStatus(buttons, box, saved.status);
+
+    for (var i = 0; i < buttons.length; i++){
+      (function(b){
+        b.onclick = function(){
+          markStatus(buttons, box, b.dataset.st);
+          save(item.id, b.dataset.st, area.value);
+          if (b.dataset.st === 'fail') setTimeout(function(){ area.focus(); }, 120);
+        };
+      })(buttons[i]);
+    }
+    var t;
+    area.oninput = function(){
+      clearTimeout(t);
+      t = setTimeout(function(){
+        var cur = (state.answers[item.id] || {}).status || 'fail';
+        save(item.id, cur, area.value);
+      }, 700);
+    };
+    setupMic(d.querySelector('.mic button'), area, item.id);
+    return d;
+  }
+
+  function btn(st, em, label){
+    return '<button type="button" class="st" data-st="' + st + '">'
+      + '<span class="em">' + em + '</span>' + label + '</button>';
+  }
+
+  function markStatus(buttons, box, st){
+    for (var i = 0; i < buttons.length; i++){
+      var b = buttons[i];
+      b.classList.remove('on-pass','on-fail','on-skip');
+      if (b.dataset.st === st) b.classList.add('on-' + st);
+    }
+    box.classList.toggle('show', st === 'fail');
+  }
+
+  function save(itemId, status, comment){
+    state.answers[itemId] = { status: status, comment: comment || '' };
+    updateProgress();
+    fetch(api('/save'), {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        nickname: state.nick, platform: state.platform, itemId: itemId,
+        status: status, comment: comment, device: navigator.userAgent
+      })
+    }).then(function(r){
+      toast(r.ok ? 'Сохранено' : 'Не сохранилось — попробуй ещё раз');
+    }).catch(function(){ toast('Нет связи — ответ сохранится позже'); });
+  }
+
+  function updateProgress(){
+    var done = 0;
+    for (var k in state.answers){ if (state.answers[k] && state.answers[k].status) done++; }
+    el('progress').textContent = done + ' из ' + state.total;
+    el('fill').style.width = state.total ? (done * 100 / state.total) + '%' : '0%';
+    var fails = 0;
+    for (var k2 in state.answers){ if (state.answers[k2].status === 'fail') fails++; }
+    el('finishText').textContent = done >= state.total && state.total > 0
+      ? ('Прошла всё. Нашла проблем: ' + fails + '. Мы уже видим твои ответы — отправлять ничего не нужно.')
+      : ('Можно закрыть в любой момент: ' + done + ' из ' + state.total + ' уже сохранено.');
+  }
+
+  function esc(s){
+    return String(s).replace(/[&<>"]/g, function(c){
+      return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'})[c];
+    });
+  }
+
+  // ── Голос в текст ───────────────────────────────────────────────────────
+  // Пишем системным микрофоном браузера и отправляем на расшифровку той же
+  // цепочкой, что работает в приложении. Текст ДОПИСЫВАЕТСЯ к тому, что уже
+  // набрано, — надиктованное не должно затирать написанное руками.
+  function setupMic(button, area, itemId){
+    if (!navigator.mediaDevices || !window.MediaRecorder){
+      button.style.display = 'none';
+      return;
+    }
+    var rec = null, chunks = [], stream = null;
+
+    button.onclick = function(){
+      if (rec && rec.state === 'recording'){ rec.stop(); return; }
+      navigator.mediaDevices.getUserMedia({ audio: true }).then(function(s){
+        stream = s;
+        var mime = '';
+        var candidates = ['audio/webm;codecs=opus','audio/webm','audio/mp4','audio/aac'];
+        for (var i = 0; i < candidates.length; i++){
+          if (MediaRecorder.isTypeSupported(candidates[i])){ mime = candidates[i]; break; }
+        }
+        rec = mime ? new MediaRecorder(s, { mimeType: mime }) : new MediaRecorder(s);
+        chunks = [];
+        rec.ondataavailable = function(e){ if (e.data && e.data.size) chunks.push(e.data); };
+        rec.onstop = function(){
+          if (stream) stream.getTracks().forEach(function(t){ t.stop(); });
+          button.classList.remove('rec');
+          button.textContent = '⏳ Расшифровываю…';
+          var blob = new Blob(chunks, { type: rec.mimeType || 'audio/webm' });
+          var fr = new FileReader();
+          fr.onloadend = function(){
+            var b64 = String(fr.result).split(',')[1] || '';
+            fetch(api('/transcribe'), {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ audio: b64, mimeType: rec.mimeType || 'audio/webm' })
+            }).then(function(r){ return r.json(); }).then(function(d){
+              button.textContent = '🎤 Наговорить';
+              var text = (d && d.text ? d.text : '').trim();
+              if (!text){ toast('Не расслышала — попробуй ещё раз'); return; }
+              area.value = area.value ? (area.value.replace(/\s+$/,'') + ' ' + text) : text;
+              area.dispatchEvent(new Event('input'));
+            }).catch(function(){
+              button.textContent = '🎤 Наговорить';
+              toast('Расшифровка не дошла');
+            });
+          };
+          fr.readAsDataURL(blob);
+        };
+        rec.start();
+        button.classList.add('rec');
+        button.textContent = '⏹ Стоп';
+      }).catch(function(){
+        toast('Не пустили к микрофону — можно написать руками');
+      });
+    };
+  }
+})();
+</script>
+</body>
+</html>
