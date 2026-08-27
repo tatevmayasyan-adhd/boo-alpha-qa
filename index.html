@@ -108,6 +108,8 @@
     <div class="card">
       <label>Как это устроено</label>
       <ul class="intro">
+        <li><b>Сначала убедись, что у тебя правда 111-я сборка</b> — это первый
+            пункт анкеты. На старой версии проверять нечего.</li>
         <li><b>Заводи тестовые дела, свои не трогай.</b> Почти в каждом пункте
             написано, что подготовить: дела и лекарства с приставкой «Тест».
             Так проверка не сломает твой настоящий план.</li>
@@ -133,6 +135,14 @@
         <button class="plat" data-plat="ios" id="pl-ios">iPhone</button>
         <button class="plat" data-plat="android" id="pl-android">Android</button>
       </div>
+      <label for="model" style="margin-top:16px">Модель телефона</label>
+      <input type="text" id="model" placeholder="iPhone 13 · Redmi Note 12 · Samsung S23"
+             autocapitalize="words" autocorrect="off" spellcheck="false">
+      <label for="osver" style="margin-top:12px">Версия системы</label>
+      <input type="text" id="osver" placeholder="iOS 26.0 · Android 14"
+             autocapitalize="off" autocorrect="off" spellcheck="false">
+      <p class="sub" style="margin:8px 0 0">Спросим один раз — дальше запомним по нику
+         и подставим сами. Нужно, чтобы искать баги, которые ловятся не на всех телефонах.</p>
     </div>
     <button class="btn primary big" id="start" style="width:100%">Начать</button>
   </div>
@@ -144,9 +154,11 @@
     </div>
     <div id="list"></div>
     <div class="card" id="general">
-      <label for="gen">Что ещё заметила?</label>
-      <p class="sub" style="margin:0 0 10px">Всё, что не попало в пункты: что
-         раздражает, что непонятно, что просто хочется сказать.</p>
+      <label for="gen">Общие впечатления</label>
+      <p class="sub" style="margin:0 0 10px">Обязательный пункт. Что ещё хочется
+         сказать про 111-ю? Стало ли что-то <b>хуже</b>, чем было раньше —
+         подтормаживает, Бу отвечает не так, пропало что-то привычное, поехала
+         вёрстка? Что раздражает, что непонятно.</p>
       <textarea id="genArea" placeholder="Своими словами — или голосом"></textarea>
       <div class="mic"><button type="button" id="genMic">🎤 Наговорить</button>
         <span class="hint">Расшифруем сами</span></div>
@@ -165,15 +177,35 @@
 <script>
 (function(){
   var API = 'https://nxabnmciearjxfdrlmpw.supabase.co/functions/v1/qa';
-  var state = { nick:'', platform:'', answers:{}, total:0 };
+  var state = { nick:'', platform:'', model:'', osver:'', answers:{}, total:0 };
+  var PROFILE = '__profile__';
 
   function api(path){ return API + path; }
   function el(id){ return document.getElementById(id); }
+  function deviceStr(){
+    return (state.model && state.osver)
+      ? (state.model + ' · ' + state.osver)
+      : (navigator.userAgent || '');
+  }
   function saveLocal(){
     try{
       localStorage.setItem('qa_nick', state.nick);
       localStorage.setItem('qa_platform', state.platform);
+      localStorage.setItem('qa_model', state.model);
+      localStorage.setItem('qa_osver', state.osver);
     }catch(e){}
+  }
+  // Профиль (телефон + версия) кладём как обычный пункт с особым id: та же
+  // таблица, тот же запрос, что и ответы. Пишем БЕЗ тоста — это фон.
+  function saveProfile(){
+    if (!state.nick) return;
+    fetch(api('/save'), {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        nickname: state.nick, platform: state.platform, itemId: PROFILE,
+        status: null, comment: state.model + ' | ' + state.osver, device: deviceStr()
+      })
+    }).catch(function(){});
   }
   function toast(text){
     var s = el('saved'); s.textContent = text || 'Сохранено';
@@ -196,9 +228,29 @@
   try{
     var savedNick = localStorage.getItem('qa_nick');
     var savedPlat = localStorage.getItem('qa_platform');
+    var savedModel = localStorage.getItem('qa_model');
+    var savedOs = localStorage.getItem('qa_osver');
     if (savedNick) el('nick').value = '@' + savedNick;
     if (savedPlat) pickPlatform(savedPlat);
+    if (savedModel) el('model').value = savedModel;
+    if (savedOs) el('osver').value = savedOs;
   }catch(e){}
+
+  // Тот же ник на новом устройстве: телефон и версию помним на сервере —
+  // подтягиваем, как только ник введён, чтобы не спрашивать второй раз.
+  el('nick').addEventListener('blur', function(){
+    var raw = (el('nick').value || '').trim().replace(/^@+/, '');
+    if (raw.length < 2) return;
+    if (el('model').value && el('osver').value) return;
+    fetch(api('/answers?platform=' + state.platform + '&nickname=' + encodeURIComponent(raw)))
+      .then(function(r){ return r.json(); }).then(function(d){
+        var p = d && d.answers && d.answers['__profile__'];
+        if (!p || !p.comment) return;
+        var pp = p.comment.split('|');
+        if (!el('model').value && pp[0]) el('model').value = pp[0].trim();
+        if (!el('osver').value && pp[1]) el('osver').value = pp[1].trim();
+      }).catch(function(){});
+  });
 
   el('start').onclick = function(){
     var raw = (el('nick').value || '').trim().replace(/^@+/, '');
@@ -207,8 +259,23 @@
       toast('Без ника не сможем переспросить');
       return;
     }
+    var model = (el('model').value || '').trim();
+    var osver = (el('osver').value || '').trim();
+    if (model.length < 2){
+      el('model').focus();
+      toast('Напиши модель телефона — без неё не понять, где баг');
+      return;
+    }
+    if (osver.length < 2){
+      el('osver').focus();
+      toast('Напиши версию системы (iOS / Android)');
+      return;
+    }
     state.nick = raw;
+    state.model = model;
+    state.osver = osver;
     saveLocal();
+    saveProfile();
     el('gate').classList.add('hidden');
     el('app').classList.remove('hidden');
     el('whoami').textContent = '@' + raw;
@@ -365,7 +432,7 @@
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         nickname: state.nick, platform: state.platform, itemId: itemId,
-        status: status, comment: comment, device: navigator.userAgent
+        status: status, comment: comment, device: deviceStr()
       })
     }).then(function(r){
       toast(r.ok ? 'Сохранено' : 'Не сохранилось — попробуй ещё раз');
