@@ -3,16 +3,17 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Альфа-тест Бу · сборка 111</title>
+<title>Альфа-тест Бу · сборка 114</title>
 <style>
   :root{
     --bg:#F6F1E7; --card:#FFFDF8; --ink:#2E2A25; --muted:#8A8177;
     --line:#E7DECF; --accent:#E4784F; --ok:#7FA37A; --skip:#B0AA9F;
+    --gold:#C9A227;
     --radius:18px; --shadow:0 2px 10px rgba(60,48,32,.06);
   }
   @media (prefers-color-scheme: dark){
     :root{ --bg:#1D1B18; --card:#26231F; --ink:#F1EBE1; --muted:#A79E92;
-           --line:#39342D; --shadow:0 2px 10px rgba(0,0,0,.3); }
+           --line:#39342D; --gold:#E0BE4A; --shadow:0 2px 10px rgba(0,0,0,.3); }
   }
   *{box-sizing:border-box}
   /* Кнопке браузер ставит СВОЙ цвет текста (buttontext = чёрный) и свой
@@ -43,6 +44,7 @@
   .btn:active{transform:scale(.98)}
   .btn.primary{background:var(--accent);color:#fff;border-color:transparent}
   .btn.big{font-size:17px;padding:17px}
+  .btn.ghost{background:transparent;color:var(--muted)}
   .plat{flex:1;padding:18px;border-radius:14px;border:2px solid var(--line);
     background:var(--card);color:var(--ink);font-size:17px;font-weight:600;cursor:pointer;
     font-family:inherit}
@@ -54,7 +56,6 @@
   .st.on-pass{border-color:var(--ok);background:rgba(127,163,122,.12)}
   .st.on-fail{border-color:var(--accent);background:rgba(228,120,79,.12)}
   .st.on-skip{border-color:var(--skip);background:rgba(176,170,159,.15)}
-  .sec{margin:26px 0 10px;font-size:18px;font-weight:700}
   .item h3{margin:0 0 10px;font-size:17px;line-height:1.35}
   .steps{margin:0 0 12px;padding-left:20px;color:var(--ink)}
   .steps li{margin-bottom:5px}
@@ -83,43 +84,77 @@
   .bar{position:sticky;top:0;z-index:5;background:var(--bg);padding:10px 0 8px;margin-bottom:6px}
   .bar .track{height:8px;background:var(--line);border-radius:999px;overflow:hidden}
   .bar .fill{height:100%;width:0;background:var(--accent);transition:width .25s ease}
-  .bar .txt{font-size:13px;color:var(--muted);margin-top:6px;display:flex;justify-content:space-between}
+  .bar .txt{font-size:13px;color:var(--muted);margin-top:6px;display:flex;
+    justify-content:space-between;gap:10px}
+  .bar .txt span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .pending{color:var(--accent);font-size:13px;margin-top:4px;display:none}
+  .pending.show{display:block}
   .saved{position:fixed;left:50%;transform:translateX(-50%);bottom:20px;background:var(--ink);
     color:var(--bg);padding:10px 18px;border-radius:999px;font-size:14px;opacity:0;
-    transition:opacity .2s ease;pointer-events:none;z-index:10}
+    transition:opacity .2s ease;pointer-events:none;z-index:10;max-width:90vw;text-align:center}
   .saved.show{opacity:.92}
-  .done{text-align:center;padding:26px 18px}
-  .done .em{font-size:40px}
   .who{font-size:13px;color:var(--muted);margin-top:10px;text-align:center}
   .who a{color:var(--muted)}
   .intro{margin:0;padding-left:20px;font-size:15px;color:var(--ink)}
   .intro li{margin-bottom:8px}
   .intro b{font-weight:600}
   .hidden{display:none}
+
+  /* ── Маршрут ─────────────────────────────────────────────────────────── */
+  .route{display:flex;flex-wrap:wrap;gap:7px;margin:0 0 4px}
+  .stop{display:flex;align-items:center;gap:5px;padding:6px 10px;border-radius:999px;
+    border:1px solid var(--line);background:var(--card);font-size:13px;color:var(--muted);
+    cursor:default;font-family:inherit}
+  .stop .e{font-size:15px;line-height:1}
+  .stop.done{border-color:var(--ok);color:var(--ink);background:rgba(127,163,122,.10)}
+  .stop.now{border-color:var(--accent);color:var(--ink);background:rgba(228,120,79,.10);
+    font-weight:600}
+  .stop.locked{opacity:.55}
+  .stop.tap{cursor:pointer}
+
+  .cityhead{margin:22px 0 12px}
+  .cityhead .em{font-size:34px;line-height:1}
+  .cityhead h2{margin:6px 0 2px;font-size:21px}
+  .cityhead .of{color:var(--muted);font-size:14px}
+
+  .postcard{background:var(--card);border:1px solid var(--gold);border-radius:var(--radius);
+    padding:20px;margin-bottom:14px;box-shadow:var(--shadow);text-align:center}
+  .postcard .em{font-size:44px;line-height:1}
+  .postcard h3{margin:10px 0 4px;font-size:20px}
+  .postcard .line{color:var(--ink);font-size:15px;margin:0 0 14px}
+  .postcard .tag{display:inline-block;font-size:12px;font-weight:700;color:var(--gold);
+    border:1px solid var(--gold);border-radius:999px;padding:3px 10px;margin-bottom:6px;
+    text-transform:uppercase;letter-spacing:.05em}
+  .postcard .rest{color:var(--muted);font-size:14px;margin:0 0 14px}
+
+  .finalcard{text-align:center;padding:26px 18px}
+  .finalcard .em{font-size:44px}
 </style>
 </head>
 <body>
 <div class="wrap">
 
   <div id="gate">
-    <h1>Альфа-тест сборки 111</h1>
-    <p class="sub">Тридцать минут, всё сохраняется само. Можно закрыть и вернуться
-       с любого устройства — просто введи тот же ник.</p>
+    <h1>Альфа-тест сборки 114</h1>
+    <p class="sub">Маршрут из четырнадцати городов. Один город — четыре-пять
+       вопросов, минут пять. Можно пройти один и уйти, можно все.</p>
     <div class="card">
       <label>Как это устроено</label>
       <ul class="intro">
-        <li><b>Сначала убедись, что у тебя правда 111-я сборка</b> — это первый
-            пункт анкеты. На старой версии проверять нечего.</li>
-        <li><b>Заводи тестовые дела, свои не трогай.</b> Почти в каждом пункте
-            написано, что подготовить: дела и лекарства с приставкой «Тест».
-            Так проверка не сломает твой настоящий план.</li>
-        <li><b>В конце всё тестовое можно удалить</b> — оно больше не нужно.</li>
+        <li><b>Города открываются по одному.</b> Ответила на все вопросы
+            города — он открылся, приходит открытка, и дальше сама решаешь:
+            ехать дальше или на сегодня хватит.</li>
+        <li><b>Остановиться после любого города — это финал, а не «бросила».</b>
+            Один пройденный город уже помогает.</li>
+        <li><b>Заводи тестовые дела, свои не трогай.</b> Почти в каждом вопросе
+            написано, что подготовить: дела и лекарства с приставкой «Тест».</li>
         <li><b>Кнопки три:</b> ✅ работает · ❌ сломалось · 🤷 пропущу.
-            «Пропущу» — нормальный ответ: значит пункт непонятен или у тебя
+            «Пропущу» — нормальный ответ: значит вопрос непонятен или у тебя
             нет такого раздела. Нам это тоже важно знать.</li>
-        <li><b>Комментарий можно оставить к любому пункту</b>, даже когда всё
+        <li><b>Комментарий можно оставить к любому вопросу</b>, даже когда всё
             работает — и написать, и наговорить голосом.</li>
-        <li><b>Ничего отправлять не надо.</b> Каждое нажатие уже сохранено.</li>
+        <li><b>Ничего отправлять не надо.</b> Каждое нажатие уже сохранено, а
+            если связь пропала — оно подождёт и уйдёт само.</li>
       </ul>
     </div>
     <div class="card">
@@ -135,39 +170,32 @@
         <button class="plat" data-plat="ios" id="pl-ios">iPhone</button>
         <button class="plat" data-plat="android" id="pl-android">Android</button>
       </div>
-      <label for="model" style="margin-top:16px">Модель телефона</label>
-      <input type="text" id="model" placeholder="iPhone 13 · Redmi Note 12 · Samsung S23"
-             autocapitalize="words" autocorrect="off" spellcheck="false">
-      <label for="osver" style="margin-top:12px">Версия системы</label>
-      <input type="text" id="osver" placeholder="iOS 26.0 · Android 14"
-             autocapitalize="off" autocorrect="off" spellcheck="false">
-      <p class="sub" style="margin:8px 0 0">Спросим один раз — дальше запомним по нику
-         и подставим сами. Нужно, чтобы искать баги, которые ловятся не на всех телефонах.</p>
     </div>
-    <button class="btn primary big" id="start" style="width:100%">Начать</button>
+    <button class="btn primary big" id="start" style="width:100%">В путь</button>
   </div>
 
   <div id="app" class="hidden">
     <div class="bar">
+      <div class="route" id="route"></div>
       <div class="track"><div class="fill" id="fill"></div></div>
       <div class="txt"><span id="progress">0 из 0</span><span id="whoami"></span></div>
+      <div class="pending" id="pending"></div>
     </div>
+
+    <div id="city"></div>
     <div id="list"></div>
-    <div class="card" id="general">
-      <label for="gen">Общие впечатления</label>
-      <p class="sub" style="margin:0 0 10px">Обязательный пункт. Что ещё хочется
-         сказать про 111-ю? Стало ли что-то <b>хуже</b>, чем было раньше —
-         подтормаживает, Бу отвечает не так, пропало что-то привычное, поехала
-         вёрстка? Что раздражает, что непонятно.</p>
+
+    <div id="afterCity"></div>
+
+    <div class="card hidden" id="general">
+      <label for="gen">Что ещё заметила?</label>
+      <p class="sub" style="margin:0 0 10px">Всё, что не попало в вопросы: что
+         раздражает, что непонятно, что просто хочется сказать.</p>
       <textarea id="genArea" placeholder="Своими словами — или голосом"></textarea>
       <div class="mic"><button type="button" id="genMic">🎤 Наговорить</button>
         <span class="hint">Расшифруем сами</span></div>
     </div>
-    <div class="card done" id="finish">
-      <div class="em">🫧</div>
-      <h3 style="margin:8px 0">Спасибо!</h3>
-      <p class="sub" id="finishText" style="margin:0"></p>
-    </div>
+
     <p class="who">Ответы уже сохранены. <a href="#" id="switch">Сменить ник или платформу</a></p>
   </div>
 
@@ -177,41 +205,113 @@
 <script>
 (function(){
   var API = 'https://nxabnmciearjxfdrlmpw.supabase.co/functions/v1/qa';
-  var state = { nick:'', platform:'', model:'', osver:'', answers:{}, total:0 };
-  var PROFILE = '__profile__';
+  var state = {
+    nick:'', platform:'', answers:{},
+    sections:[],      // города под платформу человека
+    idx:0,            // какой город открыт сейчас
+    total:0,
+    celebrated:{}     // за какие города открытку уже показывали
+  };
 
   function api(path){ return API + path; }
   function el(id){ return document.getElementById(id); }
-  function deviceStr(){
-    return (state.model && state.osver)
-      ? (state.model + ' · ' + state.osver)
-      : (navigator.userAgent || '');
-  }
+
+  // ── Локальное хранилище: всё в try/catch ────────────────────────────────
+  // В приватном режиме Safari и при заблокированных куках любое обращение
+  // БРОСАЕТ исключение, а не возвращает null. Незакрытый доступ здесь ронял
+  // бы страницу целиком, до первого вопроса.
+  function lsGet(k){ try{ return localStorage.getItem(k); }catch(e){ return null; } }
+  function lsSet(k,v){ try{ localStorage.setItem(k,v); }catch(e){} }
+
   function saveLocal(){
-    try{
-      localStorage.setItem('qa_nick', state.nick);
-      localStorage.setItem('qa_platform', state.platform);
-      localStorage.setItem('qa_model', state.model);
-      localStorage.setItem('qa_osver', state.osver);
-    }catch(e){}
-  }
-  // Профиль (телефон + версия) кладём как обычный пункт с особым id: та же
-  // таблица, тот же запрос, что и ответы. Пишем БЕЗ тоста — это фон.
-  function saveProfile(){
-    if (!state.nick) return;
-    fetch(api('/save'), {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        nickname: state.nick, platform: state.platform, itemId: PROFILE,
-        status: null, comment: state.model + ' | ' + state.osver, device: deviceStr()
-      })
-    }).catch(function(){});
+    lsSet('qa_nick', state.nick);
+    lsSet('qa_platform', state.platform);
   }
   function toast(text){
     var s = el('saved'); s.textContent = text || 'Сохранено';
     s.classList.add('show');
-    clearTimeout(s._t); s._t = setTimeout(function(){ s.classList.remove('show'); }, 1400);
+    clearTimeout(s._t); s._t = setTimeout(function(){ s.classList.remove('show'); }, 1600);
   }
+
+  // ── Очередь неотправленного ─────────────────────────────────────────────
+  // Раньше на обрыв связи страница говорила «сохранится позже» и не сохраняла
+  // ничего. Теперь это правда: неотправленное лежит здесь и уходит на
+  // возврате связи, на возврате вкладки и по таймеру.
+  var QKEY = 'qa_queue_v1';
+  function queueRead(){
+    try{ return JSON.parse(lsGet(QKEY) || '[]') || []; }catch(e){ return []; }
+  }
+  function queueWrite(q){ lsSet(QKEY, JSON.stringify(q.slice(-200))); }
+  function queuePush(payload){
+    var q = queueRead();
+    // Один пункт — одна запись: повторное нажатие заменяет прежнее,
+    // иначе к серверу уедет история кликов вместо ответа.
+    for (var i = 0; i < q.length; i++){
+      if (q[i].itemId === payload.itemId && q[i].nickname === payload.nickname
+          && q[i].platform === payload.platform){
+        q[i] = payload; queueWrite(q); showPending(); return;
+      }
+    }
+    q.push(payload); queueWrite(q); showPending();
+  }
+  function showPending(){
+    var n = queueRead().length;
+    var p = el('pending');
+    if (!n){ p.classList.remove('show'); p.textContent = ''; return; }
+    p.classList.add('show');
+    p.textContent = n === 1
+      ? 'Один ответ ждёт связи — уйдёт сам, страницу можно не держать открытой.'
+      : (n + ' ' + plural(n, 'ответ ждёт', 'ответа ждут', 'ответов ждут')
+         + ' связи — уйдут сами, страницу можно не держать открытой.');
+  }
+  var flushing = false;
+  /// Отправить очередь. Колбэк done зовётся, когда отправлять больше нечего —
+  /// либо всё ушло, либо связь снова отвалилась.
+  ///
+  /// ⚠ БЕЗ ОБРАТНЫХ КАВЫЧЕК в комментариях внутри этого блока: он лежит в
+  /// шаблонной строке String.raw, и любая обратная кавычка её закрывает —
+  /// функция перестаёт собираться. Про это же предупреждает комментарий в CSS
+  /// выше; я наступил сюда 05.09 на ровном месте.
+  ///
+  /// ⚠ Колбэк здесь не для красоты: без него загрузка страницы читала ответы
+  /// с сервера РАНЬШЕ, чем до сервера доезжала очередь, и человек, вернувшийся
+  /// после обрыва связи, видел свои же ответы неотвеченными. Поймано прогоном,
+  /// а не чтением кода: ответы на сервер долетали, а экран их не знал.
+  function flushQueue(done){
+    if (flushing){ if (done) done(); return; }
+    var q = queueRead();
+    if (!q.length){ if (done) done(); return; }
+    flushing = true;
+    var payload = q[0];
+    postSave(payload).then(function(ok){
+      flushing = false;
+      if (!ok){ if (done) done(); return; }
+      var cur = queueRead();
+      for (var i = 0; i < cur.length; i++){
+        if (cur[i].itemId === payload.itemId && cur[i].nickname === payload.nickname
+            && cur[i].platform === payload.platform){ cur.splice(i,1); break; }
+      }
+      queueWrite(cur); showPending();
+      if (cur.length) flushQueue(done); else if (done) done();
+    });
+  }
+  function postSave(payload){
+    return fetch(api('/save'), {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify(payload)
+    }).then(function(r){ return r.ok; }).catch(function(){ return false; });
+  }
+  /// Догнать экран после того, как очередь ушла уже в открытой вкладке.
+  /// Перечитываем только если что-то реально уезжало.
+  function flushAndRefresh(){
+    if (!queueRead().length) return;
+    flushQueue(function(){ if (state.nick && !queueRead().length) fetchAll(); });
+  }
+  window.addEventListener('online', flushAndRefresh);
+  document.addEventListener('visibilitychange', function(){
+    if (!document.hidden) flushAndRefresh();
+  });
+  setInterval(flushAndRefresh, 20000);
 
   // ── Вход ────────────────────────────────────────────────────────────────
   function pickPlatform(p){
@@ -225,32 +325,10 @@
   // Платформу угадываем сами — человеку остаётся только подтвердить.
   var ua = navigator.userAgent || '';
   pickPlatform(/android/i.test(ua) ? 'android' : 'ios');
-  try{
-    var savedNick = localStorage.getItem('qa_nick');
-    var savedPlat = localStorage.getItem('qa_platform');
-    var savedModel = localStorage.getItem('qa_model');
-    var savedOs = localStorage.getItem('qa_osver');
-    if (savedNick) el('nick').value = '@' + savedNick;
-    if (savedPlat) pickPlatform(savedPlat);
-    if (savedModel) el('model').value = savedModel;
-    if (savedOs) el('osver').value = savedOs;
-  }catch(e){}
-
-  // Тот же ник на новом устройстве: телефон и версию помним на сервере —
-  // подтягиваем, как только ник введён, чтобы не спрашивать второй раз.
-  el('nick').addEventListener('blur', function(){
-    var raw = (el('nick').value || '').trim().replace(/^@+/, '');
-    if (raw.length < 2) return;
-    if (el('model').value && el('osver').value) return;
-    fetch(api('/answers?platform=' + state.platform + '&nickname=' + encodeURIComponent(raw)))
-      .then(function(r){ return r.json(); }).then(function(d){
-        var p = d && d.answers && d.answers['__profile__'];
-        if (!p || !p.comment) return;
-        var pp = p.comment.split('|');
-        if (!el('model').value && pp[0]) el('model').value = pp[0].trim();
-        if (!el('osver').value && pp[1]) el('osver').value = pp[1].trim();
-      }).catch(function(){});
-  });
+  var savedNick = lsGet('qa_nick');
+  var savedPlat = lsGet('qa_platform');
+  if (savedNick) el('nick').value = '@' + savedNick;
+  if (savedPlat) pickPlatform(savedPlat);
 
   el('start').onclick = function(){
     var raw = (el('nick').value || '').trim().replace(/^@+/, '');
@@ -259,23 +337,8 @@
       toast('Без ника не сможем переспросить');
       return;
     }
-    var model = (el('model').value || '').trim();
-    var osver = (el('osver').value || '').trim();
-    if (model.length < 2){
-      el('model').focus();
-      toast('Напиши модель телефона — без неё не понять, где баг');
-      return;
-    }
-    if (osver.length < 2){
-      el('osver').focus();
-      toast('Напиши версию системы (iOS / Android)');
-      return;
-    }
     state.nick = raw;
-    state.model = model;
-    state.osver = osver;
     saveLocal();
-    saveProfile();
     el('gate').classList.add('hidden');
     el('app').classList.remove('hidden');
     el('whoami').textContent = '@' + raw;
@@ -287,36 +350,189 @@
     el('gate').classList.remove('hidden');
   };
 
-  // ── Загрузка чек-листа и уже данных ответов ─────────────────────────────
+  // ── Загрузка ────────────────────────────────────────────────────────────
+  //
+  // Сначала дожимаем очередь, потом читаем ответы: иначе то, что человек
+  // отметил без связи, вернётся с сервера как «не отвечено».
   function load(){
+    flushQueue(fetchAll);
+  }
+
+  function fetchAll(){
     Promise.all([
       fetch(api('/checklist?platform=' + state.platform)).then(function(r){ return r.json(); }),
       fetch(api('/answers?platform=' + state.platform + '&nickname=' + encodeURIComponent(state.nick)))
         .then(function(r){ return r.json(); })
     ]).then(function(res){
       state.answers = (res[1] && res[1].answers) || {};
-      render(res[0].sections || []);
+      state.sections = (res[0] && res[0].sections) || [];
+      state.total = 0;
+      for (var i = 0; i < state.sections.length; i++) state.total += state.sections[i].items.length;
+      // Открываем первый непройденный город. Человек, вернувшийся назавтра,
+      // продолжает с того места, где остановился, а не ищет его глазами.
+      state.idx = firstUnfinished();
+      // Города, уже пройденные ДО этого открытия страницы, отпраздновали
+      // раньше — повторная открытка за старое выглядела бы издёвкой.
+      for (var j = 0; j < state.sections.length; j++){
+        if (cityDone(j)) state.celebrated[state.sections[j].id] = true;
+      }
+      renderAll();
     }).catch(function(){
       toast('Не получилось загрузить — проверь интернет');
     });
   }
 
-  function render(sections){
-    var list = el('list');
-    list.innerHTML = '';
-    state.total = 0;
-    sections.forEach(function(sec){
-      var h = document.createElement('div');
-      h.className = 'sec';
-      h.textContent = sec.emoji + '  ' + sec.title;
-      list.appendChild(h);
-      sec.items.forEach(function(item){
-        state.total++;
-        list.appendChild(card(item));
-      });
-    });
-    setupGeneral();
+  function cityDone(i){
+    var sec = state.sections[i];
+    if (!sec) return false;
+    for (var k = 0; k < sec.items.length; k++){
+      var a = state.answers[sec.items[k].id];
+      if (!a || !a.status) return false;
+    }
+    return true;
+  }
+  function firstUnfinished(){
+    for (var i = 0; i < state.sections.length; i++) if (!cityDone(i)) return i;
+    return state.sections.length; // все пройдены
+  }
+  function doneCount(){
+    var n = 0;
+    for (var i = 0; i < state.sections.length; i++) if (cityDone(i)) n++;
+    return n;
+  }
+
+  // ── Отрисовка ───────────────────────────────────────────────────────────
+  function renderAll(){
+    renderRoute();
+    renderCity();
     updateProgress();
+  }
+
+  function renderRoute(){
+    var r = el('route');
+    r.innerHTML = '';
+    // Город «доступен», если он пройден, если он открыт сейчас — или если он
+    // СЛЕДУЮЩИЙ за только что закрытым. Без третьего случая маршрут выглядел
+    // так: город пройден, подсветки «ты здесь» больше нет ни на ком, и
+    // непонятно, куда идти дальше.
+    var nextOpen = cityDone(state.idx) ? state.idx + 1 : -1;
+    for (var i = 0; i < state.sections.length; i++){
+      var sec = state.sections[i];
+      var b = document.createElement('button');
+      b.type = 'button';
+      var done = cityDone(i);
+      var here = i === state.idx || i === nextOpen;
+      b.className = 'stop' + (done ? ' done' : (here ? ' now' : ' locked'));
+      b.innerHTML = '<span class="e">' + esc(sec.city.emoji) + '</span>'
+        + esc(done || here ? sec.city.name : '···');
+      // Ходить можно только по уже открытому: закрытый город — это обещание,
+      // а не запертая дверь, которую человек дёргает и получает отказ.
+      if (done || here){
+        b.className += ' tap';
+        b.setAttribute('aria-label', 'Город ' + sec.city.name);
+        (function(k){ b.onclick = function(){ state.idx = k; renderAll(); scrollTop(); }; })(i);
+      } else {
+        b.setAttribute('aria-label', 'Город впереди');
+        b.disabled = true;
+      }
+      r.appendChild(b);
+    }
+  }
+
+  function scrollTop(){
+    try{ window.scrollTo({ top:0, behavior:'smooth' }); }catch(e){ window.scrollTo(0,0); }
+  }
+
+  function renderCity(){
+    var head = el('city');
+    var list = el('list');
+    var after = el('afterCity');
+    head.innerHTML = ''; list.innerHTML = ''; after.innerHTML = '';
+
+    // Маршрут пройден целиком.
+    if (state.idx >= state.sections.length){
+      el('general').classList.remove('hidden');
+      var nc = state.sections.length;
+      after.innerHTML = '<div class="card finalcard"><div class="em">🌍</div>'
+        + '<h3 style="margin:8px 0">Весь маршрут пройден</h3>'
+        + '<p class="sub" style="margin:0">' + nc + ' '
+        + plural(nc, 'город', 'города', 'городов') + ', ' + state.total + ' '
+        + plural(state.total, 'вопрос', 'вопроса', 'вопросов')
+        + '. Мы уже видим твои ответы — отправлять ничего не нужно.</p></div>';
+      setupGeneral();
+      return;
+    }
+
+    var sec = state.sections[state.idx];
+    head.innerHTML = '<div class="cityhead"><div class="em">' + esc(sec.city.emoji) + '</div>'
+      + '<h2>' + esc(sec.city.name) + '</h2>'
+      + '<div class="of">Город ' + (state.idx + 1) + ' из ' + state.sections.length
+      + ' · ' + esc(sec.emoji + ' ' + sec.title) + '</div></div>';
+
+    for (var i = 0; i < sec.items.length; i++) list.appendChild(card(sec.items[i]));
+
+    // Общее поле — только на последнем городе, чтобы не мозолило всю дорогу.
+    el('general').classList.toggle('hidden', state.idx !== state.sections.length - 1);
+    if (state.idx === state.sections.length - 1) setupGeneral();
+
+    renderAfter();
+  }
+
+  /// Что показать под городом: открытку, если он только что закрылся, или
+  /// честное «сколько осталось до открытки».
+  function renderAfter(){
+    var after = el('afterCity');
+    after.innerHTML = '';
+    var sec = state.sections[state.idx];
+    if (!sec) return;
+
+    if (!cityDone(state.idx)){
+      var left = 0;
+      for (var i = 0; i < sec.items.length; i++){
+        var a = state.answers[sec.items[i].id];
+        if (!a || !a.status) left++;
+      }
+      var d = document.createElement('div');
+      d.className = 'card';
+      d.innerHTML = '<p class="sub" style="margin:0">До открытки — ' + left + ' '
+        + plural(left, 'ответ', 'ответа', 'ответов')
+        + '. «Пропущу» тоже считается ответом.</p>';
+      after.appendChild(d);
+      return;
+    }
+
+    var isLast = state.idx === state.sections.length - 1;
+    var p = document.createElement('div');
+    p.className = 'postcard';
+    var html = '<span class="tag">открытка</span>'
+      + '<div class="em">' + esc(sec.city.emoji) + '</div>'
+      + '<h3>' + esc(sec.city.name) + '</h3>'
+      + '<p class="line">' + esc(sec.city.postcard) + '</p>';
+    if (isLast){
+      html += '<p class="rest">Это был последний город маршрута.</p>'
+        + '<button type="button" class="btn primary big" id="toFinal" style="width:100%">'
+        + 'Посмотреть итог</button>';
+    } else {
+      var next = state.sections[state.idx + 1];
+      html += '<p class="rest">Дальше по маршруту — ' + esc(next.city.emoji) + ' '
+        + esc(next.city.name) + '. Ехать не обязательно: можно закрыть вкладку '
+        + 'прямо сейчас, всё сохранено.</p>'
+        + '<button type="button" class="btn primary big" id="toNext" style="width:100%">'
+        + 'Дальше: ' + esc(next.city.name) + '</button>'
+        + '<button type="button" class="btn ghost" id="stopHere" style="width:100%;margin-top:8px">'
+        + 'На сегодня хватит</button>';
+    }
+    p.innerHTML = html;
+    after.appendChild(p);
+
+    var toNext = el('toNext');
+    if (toNext) toNext.onclick = function(){ state.idx++; renderAll(); scrollTop(); };
+    var toFinal = el('toFinal');
+    if (toFinal) toFinal.onclick = function(){ state.idx = state.sections.length; renderAll(); scrollTop(); };
+    var stop = el('stopHere');
+    if (stop) stop.onclick = function(){
+      toast('Всё сохранено. Возвращайся когда захочешь — продолжим отсюда.');
+    };
   }
 
   function card(item){
@@ -325,15 +541,15 @@
     d.className = 'card item';
 
     var html = '';
-    if (item.key) html += '<span class="key">важный пункт</span>';
+    if (item.key) html += '<span class="key">важный вопрос</span>';
     html += '<h3>' + esc(item.title) + '</h3>';
     if (item.setup && item.setup.length){
       html += '<div class="setup"><b>Что подготовить</b><ul>';
-      item.setup.forEach(function(s){ html += '<li>' + esc(s) + '</li>'; });
+      for (var i = 0; i < item.setup.length; i++) html += '<li>' + esc(item.setup[i]) + '</li>';
       html += '</ul></div>';
     }
     html += '<ol class="steps">';
-    item.steps.forEach(function(s){ html += '<li>' + esc(s) + '</li>'; });
+    for (var j = 0; j < item.steps.length; j++) html += '<li>' + esc(item.steps[j]) + '</li>';
     html += '</ol>';
     html += '<div class="expect"><b>Должно быть:</b> ' + esc(item.expect) + '</div>';
     if (item.redFlag) html += '<div class="flag">⚠ ' + esc(item.redFlag) + '</div>';
@@ -369,17 +585,17 @@
     if (saved.status) markStatus(buttons, box, saved.status);
     if (box.classList.contains('show')) addNote.style.display = 'none';
 
-    for (var i = 0; i < buttons.length; i++){
-      (function(b){
-        b.onclick = function(){
-          markStatus(buttons, box, b.dataset.st);
-          save(item.id, b.dataset.st, area.value);
-          if (b.dataset.st === 'fail'){
+    for (var b = 0; b < buttons.length; b++){
+      (function(btnEl){
+        btnEl.onclick = function(){
+          markStatus(buttons, box, btnEl.dataset.st);
+          save(item.id, btnEl.dataset.st, area.value);
+          if (btnEl.dataset.st === 'fail'){
             if (addNote) addNote.style.display = 'none';
             setTimeout(function(){ area.focus(); }, 120);
           }
         };
-      })(buttons[i]);
+      })(buttons[b]);
     }
     var t;
     area.oninput = function(){
@@ -398,6 +614,8 @@
   var GENERAL = '__general__';
   function setupGeneral(){
     var area = el('genArea');
+    if (area._wired) return;
+    area._wired = true;
     var saved = state.answers[GENERAL];
     if (saved && saved.comment) area.value = saved.comment;
     var t;
@@ -425,18 +643,34 @@
   }
 
   function save(itemId, status, comment){
+    var wasDone = cityDone(state.idx);
     state.answers[itemId] = { status: status, comment: comment || '' };
     updateProgress();
-    fetch(api('/save'), {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        nickname: state.nick, platform: state.platform, itemId: itemId,
-        status: status, comment: comment, device: deviceStr()
-      })
-    }).then(function(r){
-      toast(r.ok ? 'Сохранено' : 'Не сохранилось — попробуй ещё раз');
-    }).catch(function(){ toast('Нет связи — ответ сохранится позже'); });
+    renderRoute();
+
+    var payload = {
+      nickname: state.nick, platform: state.platform, itemId: itemId,
+      status: status, comment: comment, device: navigator.userAgent
+    };
+    postSave(payload).then(function(ok){
+      if (ok){ toast('Сохранено'); return; }
+      queuePush(payload);
+      toast('Пока без связи — ответ в очереди, уйдёт сам');
+    });
+
+    // Открытка приезжает ровно в момент закрытия города, один раз.
+    var sec = state.sections[state.idx];
+    if (sec && !wasDone && cityDone(state.idx) && !state.celebrated[sec.id]){
+      state.celebrated[sec.id] = true;
+      renderAfter();
+      var after = el('afterCity');
+      if (after && after.firstChild && after.firstChild.scrollIntoView){
+        try{ after.firstChild.scrollIntoView({ behavior:'smooth', block:'center' }); }catch(e){}
+      }
+      toast('Открыт город: ' + sec.city.name);
+    } else {
+      renderAfter();
+    }
   }
 
   function updateProgress(){
@@ -445,15 +679,11 @@
       if (k === GENERAL) continue;
       if (state.answers[k] && state.answers[k].status) done++;
     }
-    el('progress').textContent = done + ' из ' + state.total;
+    var cities = doneCount();
+    el('progress').textContent = cities + ' из ' + state.sections.length + ' '
+      + plural(state.sections.length, 'города', 'городов', 'городов')
+      + ' · ' + done + ' из ' + state.total;
     el('fill').style.width = state.total ? (done * 100 / state.total) + '%' : '0%';
-    var fails = 0;
-    for (var k2 in state.answers){
-      if (k2 !== GENERAL && state.answers[k2].status === 'fail') fails++;
-    }
-    el('finishText').textContent = done >= state.total && state.total > 0
-      ? ('Прошла всё. Нашла проблем: ' + fails + '. Мы уже видим твои ответы — отправлять ничего не нужно.')
-      : ('Можно закрыть в любой момент: ' + done + ' из ' + state.total + ' уже сохранено.');
   }
 
   function esc(s){
@@ -462,11 +692,22 @@
     });
   }
 
+  /// Русское склонение по числу: 1 вопрос, 2 вопроса, 5 вопросов.
+  /// Отдельной функцией, потому что «61 вопросов» на финальном экране —
+  /// это первое, что человек читает, дойдя до конца маршрута.
+  function plural(n, one, few, many){
+    var mod10 = n % 10, mod100 = n % 100;
+    if (mod10 === 1 && mod100 !== 11) return one;
+    if (mod10 >= 2 && mod10 <= 4 && (mod100 < 12 || mod100 > 14)) return few;
+    return many;
+  }
+
   // ── Голос в текст ───────────────────────────────────────────────────────
   // Пишем системным микрофоном браузера и отправляем на расшифровку той же
   // цепочкой, что работает в приложении. Текст ДОПИСЫВАЕТСЯ к тому, что уже
   // набрано, — надиктованное не должно затирать написанное руками.
   function setupMic(button, area, itemId){
+    if (!button) return;
     if (!navigator.mediaDevices || !window.MediaRecorder){
       button.style.display = 'none';
       return;
@@ -518,6 +759,8 @@
       });
     };
   }
+
+  showPending();
 })();
 </script>
 </body>
