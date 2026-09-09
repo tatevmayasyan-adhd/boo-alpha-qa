@@ -34,7 +34,7 @@
   .card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);
     padding:18px;margin-bottom:14px;box-shadow:var(--shadow)}
   label{display:block;font-weight:600;margin-bottom:8px}
-  input[type=text],textarea{width:100%;padding:14px;border:1px solid var(--line);
+  input[type=text],input[type=number],textarea{width:100%;padding:14px;border:1px solid var(--line);
     border-radius:14px;background:var(--bg);color:var(--ink);font-size:16px;font-family:inherit}
   textarea{min-height:90px;resize:vertical}
   .row{display:flex;gap:10px;flex-wrap:wrap}
@@ -95,6 +95,16 @@
   .saved.show{opacity:.92}
   .who{font-size:13px;color:var(--muted);margin-top:10px;text-align:center}
   .who a{color:var(--muted)}
+  .authok{padding:12px;border-radius:12px;background:rgba(127,163,122,.12);
+    color:var(--ink);text-align:center;font-weight:600}
+  .divider{display:flex;align-items:center;gap:10px;color:var(--muted);font-size:13px;margin:14px 0}
+  .divider:before,.divider:after{content:"";height:1px;background:var(--line);flex:1}
+  .update{text-align:center;padding:28px 18px}
+  .update .em{font-size:46px}.update h2{margin:8px 0}.update .btn{display:block;text-decoration:none;margin-top:10px}
+  .leaderboard{width:100%;border-collapse:collapse;font-size:14px}
+  .leaderboard th,.leaderboard td{padding:10px 6px;border-bottom:1px solid var(--line);text-align:left}
+  .leaderboard th{color:var(--muted);font-size:12px}.leaderboard .me{background:rgba(228,120,79,.08)}
+  .leaderboard .num{text-align:right;white-space:nowrap}.cup{font-size:18px}
   .intro{margin:0;padding-left:20px;font-size:15px;color:var(--ink)}
   .intro li{margin-bottom:8px}
   .intro b{font-weight:600}
@@ -120,6 +130,8 @@
   .postcard{background:var(--card);border:1px solid var(--gold);border-radius:var(--radius);
     padding:20px;margin-bottom:14px;box-shadow:var(--shadow);text-align:center}
   .postcard .em{font-size:44px;line-height:1}
+  .postcard .citypic{display:none;width:100%;aspect-ratio:1;object-fit:cover;border-radius:14px;
+    margin:0 0 14px;background:var(--bg)}
   .postcard h3{margin:10px 0 4px;font-size:20px}
   .postcard .line{color:var(--ink);font-size:15px;margin:0 0 14px}
   .postcard .tag{display:inline-block;font-size:12px;font-weight:700;color:var(--gold);
@@ -158,11 +170,10 @@
       </ul>
     </div>
     <div class="card">
-      <label for="nick">Твой ник в Телеграме</label>
-      <input type="text" id="nick" placeholder="@nickname" autocomplete="username"
-             autocapitalize="off" autocorrect="off" spellcheck="false">
-      <p class="sub" style="margin:8px 0 0">Нужен, чтобы мы могли тебя переспросить,
-         если что-то окажется важным.</p>
+      <label for="build">Какая сборка написана в приложении?</label>
+      <input type="number" id="build" placeholder="Например, 114 или 5114"
+             inputmode="numeric" min="1">
+      <p class="sub" style="margin:8px 0 0">Профиль или Настройки → «О приложении» → «Сборка».</p>
     </div>
     <div class="card">
       <label>На чём проверяешь</label>
@@ -171,7 +182,32 @@
         <button class="plat" data-plat="android" id="pl-android">Android</button>
       </div>
     </div>
+    <div class="card">
+      <label>Войти для рейтинга</label>
+      <p class="sub" style="margin:0 0 12px">Telegram подтверждает, что кубки и ответы правда твои.</p>
+      <div id="telegramButton" style="text-align:center">
+        <script async src="https://telegram.org/js/telegram-widget.js?22"
+          data-telegram-login="Boo_SupportBot" data-size="large" data-userpic="false"
+          data-radius="12" data-onauth="onTelegramAuth(user)" data-request-access="write"></script>
+      </div>
+      <div id="telegramOk" class="authok hidden"></div>
+      <div class="divider">или без рейтинга</div>
+      <label for="nick">Твой ник в Телеграме</label>
+      <input type="text" id="nick" placeholder="@nickname" autocomplete="username"
+             autocapitalize="off" autocorrect="off" spellcheck="false">
+      <p class="sub" style="margin:8px 0 0">Нужен, чтобы мы могли тебя переспросить,
+         если что-то окажется важным.</p>
+    </div>
     <button class="btn primary big" id="start" style="width:100%">В путь</button>
+  </div>
+
+  <div id="updateGate" class="hidden">
+    <div class="card update">
+      <div class="em">🛠</div><h2>Сначала обновись</h2>
+      <p class="sub" id="updateText">Этот маршрут собран для сборки 114.</p>
+      <a class="btn primary" id="updateLink" href="#" target="_blank" rel="noopener">Обновить приложение</a>
+      <button class="btn ghost" id="backToGate" style="width:100%;margin-top:8px">Проверить номер ещё раз</button>
+    </div>
   </div>
 
   <div id="app" class="hidden">
@@ -181,6 +217,9 @@
       <div class="txt"><span id="progress">0 из 0</span><span id="whoami"></span></div>
       <div class="pending" id="pending"></div>
     </div>
+
+    <button class="btn" id="showRating" style="width:100%;margin-bottom:14px">🏆 Рейтинг маршрута</button>
+    <div class="card hidden" id="rating"></div>
 
     <div id="city"></div>
     <div id="list"></div>
@@ -196,7 +235,7 @@
         <span class="hint">Расшифруем сами</span></div>
     </div>
 
-    <p class="who">Ответы уже сохранены. <a href="#" id="switch">Сменить ник или платформу</a></p>
+    <p class="who">Ответы уже сохранены. <a href="#" id="switch">Сменить вход, сборку или платформу</a></p>
   </div>
 
 </div>
@@ -206,7 +245,7 @@
 (function(){
   var API = 'https://nxabnmciearjxfdrlmpw.supabase.co/functions/v1/qa';
   var state = {
-    nick:'', platform:'', answers:{},
+    nick:'', platform:'', answers:{}, telegram:null, deviceBuild:null,
     sections:[],      // города под платформу человека
     idx:0,            // какой город открыт сейчас
     total:0,
@@ -226,6 +265,8 @@
   function saveLocal(){
     lsSet('qa_nick', state.nick);
     lsSet('qa_platform', state.platform);
+    lsSet('qa_build', String(state.deviceBuild || ''));
+    if (state.telegram) lsSet('qa_telegram', JSON.stringify(state.telegram));
   }
   function toast(text){
     var s = el('saved'); s.textContent = text || 'Сохранено';
@@ -296,6 +337,8 @@
     });
   }
   function postSave(payload){
+    payload.deviceBuild = state.deviceBuild;
+    if (state.telegram) payload.telegram = state.telegram;
     return fetch(api('/save'), {
       method:'POST', headers:{'Content-Type':'application/json'},
       body: JSON.stringify(payload)
@@ -327,14 +370,63 @@
   pickPlatform(/android/i.test(ua) ? 'android' : 'ios');
   var savedNick = lsGet('qa_nick');
   var savedPlat = lsGet('qa_platform');
+  var savedBuild = lsGet('qa_build');
   if (savedNick) el('nick').value = '@' + savedNick;
   if (savedPlat) pickPlatform(savedPlat);
+  if (savedBuild) el('build').value = savedBuild;
+
+  function setTelegram(user, profile){
+    state.telegram = user;
+    state.nick = profile.username;
+    el('nick').value = '@' + profile.username;
+    el('nick').disabled = true;
+    el('telegramButton').classList.add('hidden');
+    el('telegramOk').classList.remove('hidden');
+    el('telegramOk').textContent = 'Вошла как @' + profile.username + ' ✓';
+    saveLocal();
+  }
+  window.onTelegramAuth = function(user){
+    fetch(api('/telegram-login'), {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({telegram:user})
+    }).then(function(r){ if (!r.ok) throw new Error('auth'); return r.json(); })
+      .then(function(data){
+        setTelegram(user, data.profile);
+        toast('Telegram подтвердил вход');
+        if (!el('app').classList.contains('hidden')) fetchAll();
+      }).catch(function(){ toast('Не получилось подтвердить вход — попробуй ещё раз'); });
+  };
+  try{
+    var oldTelegram = JSON.parse(lsGet('qa_telegram') || 'null');
+    if (oldTelegram) window.onTelegramAuth(oldTelegram);
+  }catch(e){}
+
+  function normalizedBuild(raw){
+    var n = parseInt(String(raw || '').trim(), 10);
+    if (!isFinite(n) || n < 1) return null;
+    return n >= 1000 ? n % 1000 : n;
+  }
 
   el('start').onclick = function(){
-    var raw = (el('nick').value || '').trim().replace(/^@+/, '');
+    var shownBuild = parseInt(el('build').value, 10);
+    var build = normalizedBuild(shownBuild);
+    if (build === null){ el('build').focus(); toast('Напиши номер сборки из приложения'); return; }
+    if (build < 114){
+      state.deviceBuild = shownBuild;
+      var android = state.platform === 'android';
+      el('updateText').textContent = 'У тебя сборка ' + build + ', а маршрут — для 114. После обновления возвращайся сюда.';
+      el('updateLink').href = android
+        ? 'https://play.google.com/apps/testing/com.tatevmayasyan.boo'
+        : 'https://testflight.apple.com/join/CJ2njGtB';
+      el('updateLink').textContent = android ? 'Открыть Google Play' : 'Открыть TestFlight';
+      el('gate').classList.add('hidden'); el('updateGate').classList.remove('hidden');
+      return;
+    }
+    state.deviceBuild = shownBuild;
+    var raw = state.telegram ? state.nick : (el('nick').value || '').trim().replace(/^@+/, '');
     if (raw.length < 2){
       el('nick').focus();
-      toast('Без ника не сможем переспросить');
+      toast('Для пути без рейтинга напиши ник');
       return;
     }
     state.nick = raw;
@@ -344,11 +436,48 @@
     el('whoami').textContent = '@' + raw;
     load();
   };
+  el('backToGate').onclick = function(){
+    el('updateGate').classList.add('hidden'); el('gate').classList.remove('hidden'); el('build').focus();
+  };
   el('switch').onclick = function(e){
     e.preventDefault();
     el('app').classList.add('hidden');
     el('gate').classList.remove('hidden');
   };
+
+  el('showRating').onclick = function(){
+    var box = el('rating');
+    if (!state.telegram){
+      box.classList.remove('hidden');
+      box.innerHTML = '<h3 style="margin-top:0">Рейтинг</h3><p class="sub" style="margin:0">Войди через Telegram, чтобы видеть места и участвовать. Маршрут можно проходить и без входа.</p>';
+      return;
+    }
+    box.classList.remove('hidden');
+    box.innerHTML = '<p class="sub" style="margin:0">Загружаю рейтинг…</p>';
+    fetch(api('/leaderboard'), {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({telegram:state.telegram})
+    }).then(function(r){ if (!r.ok) throw new Error('rating'); return r.json(); })
+      .then(renderRating).catch(function(){ box.innerHTML = '<p class="sub" style="margin:0">Не получилось загрузить. Попробуй ещё раз чуть позже.</p>'; });
+  };
+
+  function renderRating(data){
+    var rows = (data && data.rows) || [];
+    var html = '<h3 style="margin-top:0">🏆 Рейтинг маршрута</h3>';
+    if (!rows.length){
+      html += '<p class="sub" style="margin:0">Здесь пока тихо. Твоё место — ещё не начала.</p>';
+      el('rating').innerHTML = html; return;
+    }
+    html += '<table class="leaderboard"><thead><tr><th>Место</th><th>Тестер</th><th class="num">Города</th></tr></thead><tbody>';
+    for (var i=0;i<rows.length;i++){
+      var row=rows[i], cup=row.rank===1?'🥇':row.rank===2?'🥈':row.rank===3?'🥉':'';
+      html += '<tr' + (row.isMe?' class="me"':'') + '><td><span class="cup">' + cup + '</span> ' + row.rank + '</td>'
+        + '<td>@' + esc(row.username) + (row.isMe?' · ты':'') + '</td><td class="num">' + row.citiesDone + '</td></tr>';
+    }
+    html += '</tbody></table>';
+    if (!data.me) html += '<p class="sub" style="margin:12px 0 0">Твоё место — ещё не начала.</p>';
+    el('rating').innerHTML = html;
+  }
 
   // ── Загрузка ────────────────────────────────────────────────────────────
   //
@@ -361,7 +490,10 @@
   function fetchAll(){
     Promise.all([
       fetch(api('/checklist?platform=' + state.platform)).then(function(r){ return r.json(); }),
-      fetch(api('/answers?platform=' + state.platform + '&nickname=' + encodeURIComponent(state.nick)))
+      fetch(api('/answers'), {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({platform:state.platform,nickname:state.nick,telegram:state.telegram})
+      })
         .then(function(r){ return r.json(); })
     ]).then(function(res){
       state.answers = (res[1] && res[1].answers) || {};
@@ -504,7 +636,10 @@
     var isLast = state.idx === state.sections.length - 1;
     var p = document.createElement('div');
     p.className = 'postcard';
+    var picture = cityImage(sec.city.name);
     var html = '<span class="tag">открытка</span>'
+      + '<img class="citypic" src="' + esc(picture) + '" alt="" '
+      + 'onload="this.style.display=\'block\'" onerror="this.remove()">'
       + '<div class="em">' + esc(sec.city.emoji) + '</div>'
       + '<h3>' + esc(sec.city.name) + '</h3>'
       + '<p class="line">' + esc(sec.city.postcard) + '</p>';
@@ -650,7 +785,8 @@
 
     var payload = {
       nickname: state.nick, platform: state.platform, itemId: itemId,
-      status: status, comment: comment, device: navigator.userAgent
+      status: status, comment: comment, device: navigator.userAgent,
+      deviceBuild: state.deviceBuild, telegram: state.telegram
     };
     postSave(payload).then(function(ok){
       if (ok){ toast('Сохранено'); return; }
@@ -690,6 +826,20 @@
     return String(s).replace(/[&<>"]/g, function(c){
       return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'})[c];
     });
+  }
+
+  // Картинки приезжают постепенно. Пока конкретного файла нет, onerror
+  // бесшумно убирает img и остаётся проверенная текстовая открытка.
+  function cityImage(name){
+    var slugs = {
+      'Тбилиси':'tbilisi','Стамбул':'istanbul','Лиссабон':'lisbon','Рейкьявик':'reykjavik',
+      'Киото':'kyoto','Марракеш':'marrakesh','Прага':'prague','Порту':'porto',
+      'Буэнос-Айрес':'buenos-aires','Копенгаген':'copenhagen','Ханой':'hanoi',
+      'Кейптаун':'cape-town','Валенсия':'valencia','Монреаль':'montreal',
+      'Тромсё':'tromso','Веллингтон':'wellington'
+    };
+    return 'https://tatevmayasyan-adhd.github.io/boo-alpha-qa/assets/qa_cities/'
+      + (slugs[name] || 'missing') + '.png';
   }
 
   /// Русское склонение по числу: 1 вопрос, 2 вопроса, 5 вопросов.
