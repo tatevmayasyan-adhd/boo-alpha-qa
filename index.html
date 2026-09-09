@@ -295,6 +295,14 @@
     }
     q.push(payload); queueWrite(q); showPending();
   }
+  function queueDrop(payload){
+    var q = queueRead();
+    for (var i = 0; i < q.length; i++){
+      if (q[i].itemId === payload.itemId && q[i].nickname === payload.nickname
+          && q[i].platform === payload.platform){ q.splice(i,1); break; }
+    }
+    queueWrite(q); showPending();
+  }
   function showPending(){
     var n = queueRead().length;
     var p = el('pending');
@@ -324,16 +332,19 @@
     if (!q.length){ if (done) done(); return; }
     flushing = true;
     var payload = q[0];
-    postSave(payload).then(function(ok){
+    postSave(payload).then(function(res){
       flushing = false;
-      if (!ok){ if (done) done(); return; }
-      var cur = queueRead();
-      for (var i = 0; i < cur.length; i++){
-        if (cur[i].itemId === payload.itemId && cur[i].nickname === payload.nickname
-            && cur[i].platform === payload.platform){ cur.splice(i,1); break; }
+      // Отказ по сборке не лечится ожиданием: держать такой ответ в очереди
+      // значит врать баннером «уйдёт сам».
+      if (res === 'stale'){
+        queueDrop(payload);
+        showUpdateGate(state.deviceBuild);
+        if (done) done();
+        return;
       }
-      queueWrite(cur); showPending();
-      if (cur.length) flushQueue(done); else if (done) done();
+      if (res !== 'ok'){ if (done) done(); return; }
+      queueDrop(payload);
+      if (queueRead().length) flushQueue(done); else if (done) done();
     });
   }
   function postSave(payload){
@@ -342,7 +353,12 @@
     return fetch(api('/save'), {
       method:'POST', headers:{'Content-Type':'application/json'},
       body: JSON.stringify(payload)
-    }).then(function(r){ return r.ok; }).catch(function(){ return false; });
+    }).then(function(r){
+      if (r.ok) return 'ok';
+      // 409 — это не обрыв связи, а «сборка старая». Очередь такое не спасёт:
+      // сервер откажет и через час, и через день.
+      return r.status === 409 ? 'stale' : 'offline';
+    }).catch(function(){ return 'offline'; });
   }
   /// Догнать экран после того, как очередь ушла уже в открытой вкладке.
   /// Перечитываем только если что-то реально уезжало.
@@ -407,19 +423,32 @@
     return n >= 1000 ? n % 1000 : n;
   }
 
+  /// Экран «сначала обновись». Зовётся и со входа, и на отказ сервера 409:
+  /// страница прошлого раунда, оставшаяся в кэше браузера, номер сборки не
+  /// спрашивала вовсе — и без этого вызова человек продолжал отвечать в
+  /// пустоту.
+  function showUpdateGate(shownBuild){
+    var build = normalizedBuild(shownBuild);
+    var android = state.platform === 'android';
+    el('updateText').textContent = build === null
+      ? 'Маршрут собран для сборки 114. Обнови приложение и вернись сюда.'
+      : 'У тебя сборка ' + build + ', а маршрут — для 114. После обновления возвращайся сюда.';
+    el('updateLink').href = android
+      ? 'https://play.google.com/apps/testing/com.tatevmayasyan.boo'
+      : 'https://testflight.apple.com/join/CJ2njGtB';
+    el('updateLink').textContent = android ? 'Открыть Google Play' : 'Открыть TestFlight';
+    el('gate').classList.add('hidden');
+    el('app').classList.add('hidden');
+    el('updateGate').classList.remove('hidden');
+  }
+
   el('start').onclick = function(){
     var shownBuild = parseInt(el('build').value, 10);
     var build = normalizedBuild(shownBuild);
     if (build === null){ el('build').focus(); toast('Напиши номер сборки из приложения'); return; }
     if (build < 114){
       state.deviceBuild = shownBuild;
-      var android = state.platform === 'android';
-      el('updateText').textContent = 'У тебя сборка ' + build + ', а маршрут — для 114. После обновления возвращайся сюда.';
-      el('updateLink').href = android
-        ? 'https://play.google.com/apps/testing/com.tatevmayasyan.boo'
-        : 'https://testflight.apple.com/join/CJ2njGtB';
-      el('updateLink').textContent = android ? 'Открыть Google Play' : 'Открыть TestFlight';
-      el('gate').classList.add('hidden'); el('updateGate').classList.remove('hidden');
+      showUpdateGate(shownBuild);
       return;
     }
     state.deviceBuild = shownBuild;
@@ -788,8 +817,9 @@
       status: status, comment: comment, device: navigator.userAgent,
       deviceBuild: state.deviceBuild, telegram: state.telegram
     };
-    postSave(payload).then(function(ok){
-      if (ok){ toast('Сохранено'); return; }
+    postSave(payload).then(function(res){
+      if (res === 'ok'){ toast('Сохранено'); return; }
+      if (res === 'stale'){ showUpdateGate(state.deviceBuild); return; }
       queuePush(payload);
       toast('Пока без связи — ответ в очереди, уйдёт сам');
     });
