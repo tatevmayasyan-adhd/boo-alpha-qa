@@ -191,6 +191,9 @@
           data-radius="12" data-onauth="onTelegramAuth(user)" data-request-access="write"></script>
       </div>
       <div id="telegramOk" class="authok hidden"></div>
+      <p class="sub" style="margin:8px 0 0;font-size:13px">Кнопка не реагирует?
+        Открой эту страницу в обычном браузере: внутри Telegram его вход не
+        работает — это ограничение самого Telegram, не наше.</p>
       <div class="divider">или без рейтинга</div>
       <label for="nick">Твой ник в Телеграме</label>
       <input type="text" id="nick" placeholder="@nickname" autocomplete="username"
@@ -342,6 +345,7 @@
         if (done) done();
         return;
       }
+      if (res === 'auth'){ clearTelegram(); delete payload.telegram; }
       if (res !== 'ok'){ if (done) done(); return; }
       queueDrop(payload);
       if (queueRead().length) flushQueue(done); else if (done) done();
@@ -357,7 +361,10 @@
       if (r.ok) return 'ok';
       // 409 — это не обрыв связи, а «сборка старая». Очередь такое не спасёт:
       // сервер откажет и через час, и через день.
-      return r.status === 409 ? 'stale' : 'offline';
+      if (r.status === 409) return 'stale';
+      // 401 — протухла подпись Telegram. Ответ сохранить можно, но уже без
+      // входа: иначе человек весь вечер отвечает в очередь, которая не уйдёт.
+      return r.status === 401 ? 'auth' : 'offline';
     }).catch(function(){ return 'offline'; });
   }
   /// Догнать экран после того, как очередь ушла уже в открытой вкладке.
@@ -401,7 +408,22 @@
     el('telegramOk').textContent = 'Вошла как @' + profile.username + ' ✓';
     saveLocal();
   }
-  window.onTelegramAuth = function(user){
+  /// Забыть вход и вернуть кнопку.
+  ///
+  /// ЗАЧЕМ. Подпись Telegram живёт сутки — так требует сам Telegram. Раньше
+  /// страница хранила её вечно и на каждом открытии предъявляла серверу
+  /// протухшую: тот отвечал отказом, человек читал «не получилось подтвердить
+  /// вход» — и так каждый день, хотя кнопка рядом работала. Отсюда жалобы
+  /// «вход через ТГ не работает» (11.09.2026).
+  function clearTelegram(){
+    state.telegram = null;
+    lsSet('qa_telegram', '');
+    el('nick').disabled = false;
+    el('telegramOk').classList.add('hidden');
+    el('telegramButton').classList.remove('hidden');
+  }
+
+  window.onTelegramAuth = function(user, replay){
     fetch(api('/telegram-login'), {
       method:'POST', headers:{'Content-Type':'application/json'},
       body:JSON.stringify({telegram:user})
@@ -410,11 +432,16 @@
         setTelegram(user, data.profile);
         toast('Telegram подтвердил вход');
         if (!el('app').classList.contains('hidden')) fetchAll();
-      }).catch(function(){ toast('Не получилось подтвердить вход — попробуй ещё раз'); });
+      }).catch(function(){
+        clearTelegram();
+        toast(replay
+          ? 'Вход по Telegram устарел — нажми «Войти» ещё раз'
+          : 'Не получилось подтвердить вход — попробуй ещё раз');
+      });
   };
   try{
     var oldTelegram = JSON.parse(lsGet('qa_telegram') || 'null');
-    if (oldTelegram) window.onTelegramAuth(oldTelegram);
+    if (oldTelegram) window.onTelegramAuth(oldTelegram, true);
   }catch(e){}
 
   function normalizedBuild(raw){
@@ -820,6 +847,14 @@
     postSave(payload).then(function(res){
       if (res === 'ok'){ toast('Сохранено'); return; }
       if (res === 'stale'){ showUpdateGate(state.deviceBuild); return; }
+      if (res === 'auth'){
+        clearTelegram();
+        delete payload.telegram;
+        queuePush(payload);
+        flushQueue();
+        toast('Вход по Telegram устарел — ответ сохранён, войди заново для рейтинга');
+        return;
+      }
       queuePush(payload);
       toast('Пока без связи — ответ в очереди, уйдёт сам');
     });
