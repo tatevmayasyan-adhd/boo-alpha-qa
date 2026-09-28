@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Альфа-тест Бу · сборка 114</title>
+<title>Альфа-тест Бу · сборка 200</title>
 <style>
   :root{
     --bg:#F6F1E7; --card:#FFFDF8; --ink:#2E2A25; --muted:#8A8177;
@@ -147,8 +147,8 @@
 <div class="wrap">
 
   <div id="gate">
-    <h1>Альфа-тест сборки 114</h1>
-    <p class="sub">Маршрут из 16 городов. Один город — четыре-пять
+    <h1>Альфа-тест сборки 200</h1>
+    <p class="sub">Маршрут из 31 городов. Один город — четыре-пять
        вопросов, минут пять. Можно пройти один и уйти, можно все.</p>
     <div class="card">
       <label>Как это устроено</label>
@@ -207,7 +207,7 @@
   <div id="updateGate" class="hidden">
     <div class="card update">
       <div class="em">🛠</div><h2>Сначала обновись</h2>
-      <p class="sub" id="updateText">Этот маршрут собран для сборки 114.</p>
+      <p class="sub" id="updateText">Этот маршрут собран для сборки 200.</p>
       <a class="btn primary" id="updateLink" href="#" target="_blank" rel="noopener">Обновить приложение</a>
       <button class="btn ghost" id="backToGate" style="width:100%;margin-top:8px">Проверить номер ещё раз</button>
     </div>
@@ -458,8 +458,8 @@
     var build = normalizedBuild(shownBuild);
     var android = state.platform === 'android';
     el('updateText').textContent = build === null
-      ? 'Маршрут собран для сборки 114. Обнови приложение и вернись сюда.'
-      : 'У тебя сборка ' + build + ', а маршрут — для 114. После обновления возвращайся сюда.';
+      ? 'Маршрут собран для сборки 200. Обнови приложение и вернись сюда.'
+      : 'У тебя сборка ' + build + ', а маршрут — для 200. После обновления возвращайся сюда.';
     el('updateLink').href = android
       ? 'https://play.google.com/apps/testing/com.tatevmayasyan.boo'
       : 'https://testflight.apple.com/join/CJ2njGtB';
@@ -473,7 +473,7 @@
     var shownBuild = parseInt(el('build').value, 10);
     var build = normalizedBuild(shownBuild);
     if (build === null){ el('build').focus(); toast('Напиши номер сборки из приложения'); return; }
-    if (build < 114){
+    if (build < 200){
       state.deviceBuild = shownBuild;
       showUpdateGate(shownBuild);
       return;
@@ -897,7 +897,7 @@
   // бесшумно убирает img и остаётся проверенная текстовая открытка.
   function cityImage(name){
     var slugs = {
-      'Тбилиси':'tbilisi','Стамбул':'istanbul','Лиссабон':'lisbon','Рейкьявик':'reykjavik',
+      'Тбилиси':'tbilisi','Константинополь':'istanbul','Стамбул':'istanbul','Лиссабон':'lisbon','Рейкьявик':'reykjavik',
       'Киото':'kyoto','Марракеш':'marrakesh','Прага':'prague','Порту':'porto',
       'Буэнос-Айрес':'buenos-aires','Копенгаген':'copenhagen','Ханой':'hanoi',
       'Кейптаун':'cape-town','Валенсия':'valencia','Монреаль':'montreal',
@@ -909,7 +909,78 @@
       'Дакар':'dakar','Ла-Пас':'la-paz','Луангпхабанг':'luang-prabang',
       'Мельбурн':'melbourne','Маскат':'muscat','Осака':'osaka','Сараево':'sarajevo',
       'Сент-Джонс':'st-johns','Таллин':'tallinn','Ушуайя':'ushuaia',
-      'Вальпараисо':'valparaiso'
+      'Вальпараисо':'valparaiso',
+      // 26.09: вторая серия открыток с Бу (203 города), список —
+      // .planning/handoff/PROMPT_GPT_city_cards_v2_boo.md. Нет файла — onerror
+      // оставляет текстовую открытку, как и раньше.
+      'Париж':'paris', 'Рим':'rome', 'Венеция':'venice', 'Флоренция':'florence',
+      'Милан':'milan', 'Барселона':'barcelona', 'Севилья':'seville',
+      'Гранада':'granada', 'Мадрид':'madrid', 'Мюнхен':'munich', 'Берлин':'berlin',
+      'Кёльн':'cologne', 'Амстердам':'amsterdam', 'Роттердам':'rotterdam',
+      'Брюссель':'brussels', 'Брюгге':'bruges', 'Лондон':'london',
+      'Эдинбург':'edinburgh', 'Дублин':'dublin', 'Цюрих':'zurich', 'Женева':'geneva',
+      'Берн':'bern', 'Вена':'vienna', 'Инсбрук':'innsbruck', 'Зальцбург':'salzburg',
+      'Стокгольм':'stockholm', 'Осло':'oslo', 'Хельсинки':'helsinki',
+      'Варшава':'warsaw', 'Краков':'krakow', 'Будапешт':'budapest',
+      'Братислава':'bratislava', 'Бухарест':'bucharest', 'София':'sofia',
+      'Белград':'belgrade', 'Загреб':'zagreb', 'Любляна':'ljubljana',
+      'Вильнюс':'vilnius', 'Рига':'riga', 'Валлетта':'valletta', 'Никосия':'nicosia',
+      'Люксембург':'luxembourg-city', 'Монако':'monaco',
+      'Андорра-ла-Велья':'andorra-la-vella', 'Дубровник':'dubrovnik',
+      'Санторини':'santorini', 'Миконос':'mykonos', 'Тирана':'tirana',
+      'Скопье':'skopje', 'Подгорица':'podgorica', 'Берген':'bergen', 'Гданьск':'gdansk',
+      'Чески-Крумлов':'cesky-krumlov', 'Гальштат':'hallstatt', 'Матера':'matera',
+      'Токио':'tokyo', 'Сеул':'seoul', 'Пусан':'busan', 'Пекин':'beijing',
+      'Шанхай':'shanghai', 'Сиань':'xian', 'Гонконг':'hong-kong', 'Тайбэй':'taipei',
+      'Бангкок':'bangkok', 'Хошимин':'ho-chi-minh-city', 'Сиемреап':'siem-reap',
+      'Пномпень':'phnom-penh', 'Вьентьян':'vientiane', 'Куала-Лумпур':'kuala-lumpur',
+      'Сингапур':'singapore', 'Джакарта':'jakarta', 'Убуд (Бали)':'ubud',
+      'Манила':'manila', 'Коломбо':'colombo', 'Катманду':'kathmandu',
+      'Тхимпху':'thimphu', 'Дели':'delhi', 'Агра':'agra', 'Джайпур':'jaipur',
+      'Варанаси':'varanasi', 'Удайпур':'udaipur', 'Мумбаи':'mumbai', 'Дакка':'dhaka',
+      'Улан-Батор':'ulaanbaatar', 'Алматы':'almaty', 'Астана':'astana',
+      'Ташкент':'tashkent', 'Самарканд':'samarkand', 'Бухара':'bukhara',
+      'Бишкек':'bishkek', 'Душанбе':'dushanbe', 'Ашхабад':'ashgabat',
+      'Ереван':'yerevan', 'Исфахан':'isfahan', 'Шираз':'shiraz', 'Амман':'amman',
+      'Петра':'petra', 'Дубай':'dubai', 'Абу-Даби':'abu-dhabi', 'Доха':'doha',
+      'Манама':'manama', 'Эль-Кувейт':'kuwait-city', 'Хойан':'hoi-an', 'Хюэ':'hue',
+      'Джорджтаун (Пенанг)':'george-town-penang', 'Малакка':'malacca',
+      'Чэнду':'chengdu',
+      'Калькутта':'kolkata', 'Каир':'cairo', 'Александрия':'alexandria', 'Фес':'fez',
+      'Касабланка':'casablanca', 'Тунис':'tunis', 'Алжир':'algiers', 'Аккра':'accra',
+      'Лагос':'lagos', 'Абиджан':'abidjan', 'Ломе':'lome', 'Найроби':'nairobi',
+      'Занзибар (Стоун-Таун)':'zanzibar-stone-town', 'Дар-эс-Салам':'dar-es-salaam',
+      'Кампала':'kampala', 'Кигали':'kigali', 'Аддис-Абеба':'addis-ababa',
+      'Лалибела':'lalibela', 'Йоханнесбург':'johannesburg', 'Претория':'pretoria',
+      'Виндхук':'windhoek', 'Мапуту':'maputo', 'Виктория-Фолс':'victoria-falls',
+      'Лусака':'lusaka', 'Либревиль':'libreville', 'Прая (Кабо-Верде)':'praia',
+      'Фритаун':'freetown', 'Порт-Луи (Маврикий)':'port-louis',
+      'Сейшелы':'victoria-seychelles', 'Джибути':'djibouti-city',
+      'Эс-Сувейра':'essaouira', 'Луксор':'luxor', 'Асуан':'aswan',
+      'Сантьяго':'santiago', 'Лима':'lima', 'Куско':'cusco',
+      'Мачу-Пикчу':'machu-picchu', 'Кито':'quito', 'Гуаякиль':'guayaquil',
+      'Галапагосы':'galapagos', 'Богота':'bogota', 'Картахена':'cartagena',
+      'Медельин':'medellin', 'Монтевидео':'montevideo', 'Асунсьон':'asuncion',
+      'Рио-де-Жанейро':'rio-de-janeiro', 'Сан-Паулу':'sao-paulo', 'Салвадор':'salvador',
+      'Бразилиа':'brasilia', 'Манаус':'manaus', 'Ору-Прету':'ouro-preto',
+      'Мехико':'mexico-city', 'Оахака':'oaxaca', 'Гуанахуато':'guanajuato',
+      'Сан-Мигель-де-Альенде':'san-miguel-de-allende', 'Мерида':'merida',
+      'Тулум':'tulum', 'Гавана':'havana', 'Санто-Доминго':'santo-domingo',
+      'Сан-Хуан (Пуэрто-Рико)':'san-juan', 'Кингстон (Ямайка)':'kingston',
+      'Нассау':'nassau', 'Бриджтаун (Барбадос)':'bridgetown',
+      'Порт-оф-Спейн (Тринидад)':'port-of-spain',
+      'Сан-Хосе (Коста-Рика)':'san-jose-costa-rica', 'Панама':'panama-city',
+      'Антигуа (Гватемала)':'antigua-guatemala', 'Тегусигальпа':'tegucigalpa',
+      'Сальта':'salta', 'Квебек':'quebec-city', 'Торонто':'toronto',
+      'Ванкувер':'vancouver', 'Оттава':'ottawa', 'Нью-Йорк':'new-york',
+      'Вашингтон':'washington-dc', 'Бостон':'boston', 'Чикаго':'chicago',
+      'Сан-Франциско':'san-francisco', 'Лос-Анджелес':'los-angeles',
+      'Новый Орлеан':'new-orleans', 'Санта-Фе':'santa-fe', 'Чарлстон':'charleston',
+      'Сидней':'sydney', 'Окленд':'auckland', 'Квинстаун':'queenstown',
+      'Канберра':'canberra', 'Сува (Фиджи)':'suva', 'Нукуалофа (Тонга)':'nukualofa',
+      'Апиа (Самоа)':'apia', 'Порт-Вила (Вануату)':'port-vila',
+      'Папеэте (Таити)':'papeete', 'Гонолулу':'honolulu', 'Нуук (Гренландия)':'nuuk',
+      'Торсхавн (Фарерские острова)':'torshavn'
     };
     // WebP, а не PNG: та же картинка 1.7 МБ против 60 КБ, а маршрут проходят
     // с телефона. Браузер без WebP попадёт в onerror и увидит текстовую

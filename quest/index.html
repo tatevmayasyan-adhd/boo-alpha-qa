@@ -1,0 +1,551 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Квест глазами · альфа Бу</title>
+<style>
+
+  /* Цвета проверены на контраст скриптом (WCAG AA 4.5 для мелких
+     плашек), обе темы: акцент/жёлтый в светлой затемнены, на акцентной
+     кнопке в тёмной — тёмный текст. */
+  :root{
+    --bg:#F6F1E7; --card:#FFFDF8; --ink:#2E2A25; --muted:#6F675D;
+    --line:#E7DECF; --accent:#A8431E; --on-accent:#FFFFFF; --accent-soft:rgba(228,120,79,.12);
+    --ok:#3F6A3A; --ok-soft:rgba(127,163,122,.16); --warn:#7A560C;
+    --warn-soft:rgba(201,162,39,.16); --radius:18px;
+    --shadow:0 2px 10px rgba(60,48,32,.06);
+  }
+  @media (prefers-color-scheme: dark){
+    :root{ --bg:#1D1B18; --card:#26231F; --ink:#F1EBE1; --muted:#B3A99C;
+      --line:#39342D; --accent:#F0936B; --on-accent:#1D1B18; --accent-soft:rgba(240,147,107,.16);
+      --ok:#9CC496; --ok-soft:rgba(156,196,150,.14); --warn:#E0BE4A;
+      --warn-soft:rgba(224,190,74,.14); --shadow:0 2px 10px rgba(0,0,0,.3); }
+  }
+  *{box-sizing:border-box}
+  button{color:var(--ink);font-family:inherit}
+  html{-webkit-text-size-adjust:100%}
+  body{margin:0;background:var(--bg);color:var(--ink);font-style:normal;
+    font:16px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left)}
+  em,i{font-style:normal;font-weight:600}
+  .wrap{max-width:760px;margin:0 auto;padding:16px 16px 80px}
+  h1{font-size:22px;margin:0 0 4px;line-height:1.25}
+  h2{font-size:19px;margin:22px 0 10px}
+  .sub{color:var(--muted);font-size:14px;margin:0 0 14px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);
+    padding:16px;margin-bottom:12px;box-shadow:var(--shadow)}
+  label{display:block;font-weight:600;margin-bottom:8px}
+  input[type=text],input[type=number],textarea,select{width:100%;padding:13px;
+    border:1px solid var(--line);border-radius:14px;background:var(--bg);color:var(--ink);
+    font-size:16px;font-family:inherit}
+  textarea{min-height:80px;resize:vertical}
+  .row{display:flex;gap:10px;flex-wrap:wrap}
+  .btn{flex:1;min-width:120px;min-height:48px;padding:13px 12px;border-radius:14px;
+    border:1px solid var(--line);background:var(--card);color:var(--ink);font-size:16px;
+    font-weight:600;cursor:pointer;-webkit-tap-highlight-color:transparent}
+  .btn.primary{background:var(--accent);color:var(--on-accent);border-color:transparent}
+  .btn.ghost{background:transparent;color:var(--muted)}
+  .btn.small{flex:0 0 auto;min-width:0;min-height:40px;padding:8px 14px;font-size:14px}
+  .plat{flex:1;min-height:52px;padding:14px;border-radius:14px;border:2px solid var(--line);
+    background:var(--card);font-size:17px;font-weight:600;cursor:pointer}
+  .plat.on{border-color:var(--accent);background:var(--accent-soft)}
+  .hidden{display:none !important}
+  .pill{display:inline-block;font-size:12px;font-weight:700;border-radius:999px;
+    padding:2px 9px;border:1px solid var(--line);color:var(--muted);white-space:nowrap}
+  .pill.warn{border-color:var(--warn);color:var(--warn);background:var(--warn-soft)}
+  .pill.bad{border-color:var(--accent);color:var(--accent);background:var(--accent-soft)}
+  .pill.ok{border-color:var(--ok);color:var(--ok);background:var(--ok-soft)}
+  .toast{position:fixed;left:50%;transform:translateX(-50%);bottom:20px;background:var(--ink);
+    color:var(--bg);padding:10px 18px;border-radius:999px;font-size:14px;opacity:0;
+    transition:opacity .2s ease;pointer-events:none;z-index:10;max-width:90vw;text-align:center}
+  .toast.show{opacity:.94}
+  .authok{padding:12px;border-radius:12px;background:var(--ok-soft);text-align:center;font-weight:600}
+  details{border-top:1px solid var(--line)}
+  details:first-of-type{border-top:0}
+  summary{cursor:pointer;list-style:none;padding:12px 0;font-weight:600;display:flex;
+    gap:8px;align-items:center;justify-content:space-between}
+  summary::-webkit-details-marker{display:none}
+  a{color:var(--accent)}
+
+  .step{padding:14px;border:1px solid var(--line);border-radius:14px;margin:0 0 10px;background:var(--bg)}
+  .step.fresh{border-color:var(--warn);box-shadow:0 0 0 1px var(--warn) inset}
+  .step h3{margin:0 0 6px;font-size:16px;line-height:1.35}
+  .step .where{font-size:14px;color:var(--muted);margin:0 0 6px}
+  .step .says{font-size:14px;margin:0 0 10px;padding:8px 10px;border-radius:10px;background:var(--card)}
+  .verdict{display:flex;gap:8px}
+  .vbtn{flex:1;min-height:48px;border-radius:12px;border:2px solid var(--line);background:var(--card);
+    font-size:15px;font-weight:600;cursor:pointer}
+  .vbtn.on-seen{border-color:var(--ok);background:var(--ok-soft)}
+  .vbtn.on-not_seen{border-color:var(--accent);background:var(--accent-soft)}
+  .more{margin-top:10px}
+  .chips{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px}
+  .chip{min-height:40px;padding:8px 12px;border-radius:14px;border:1px solid var(--line);
+    background:var(--card);font-size:14px;cursor:pointer;text-align:left}
+  .chip.on{border-color:var(--accent);background:var(--accent-soft);font-weight:600}
+  .shot{display:flex;gap:10px;align-items:center;margin-top:8px;flex-wrap:wrap}
+  .shot label{margin:0;font-weight:600;font-size:14px;padding:9px 14px;border:1px dashed var(--line);
+    border-radius:12px;cursor:pointer}
+  .shot input{display:none}
+  .shot .st{font-size:13px;color:var(--muted)}
+  .bar{position:sticky;top:0;z-index:5;background:var(--bg);padding:10px 0 8px}
+  .track{height:8px;background:var(--line);border-radius:999px;overflow:hidden}
+  .fill{height:100%;width:0;background:var(--ok);transition:width .25s ease}
+  .bar .txt{font-size:13px;color:var(--muted);margin-top:6px;display:flex;justify-content:space-between;gap:10px}
+  .device{font-size:13px;color:var(--muted);text-align:center;margin-top:16px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Квест глазами</h1>
+  <p class="sub">Проходишь квест в приложении — и здесь отмечаешь, всё ли хорошо видно:
+    кнопку, на которую показывает Бу, само облачко и текст рядом.</p>
+
+  <div id="gate">
+    <div class="card">
+      <ul style="margin:0;padding-left:18px">
+        <li><b>Проходить всё не нужно.</b> Каждый отмеченный шаг уже помогает.
+          Шаги, которые ещё никто не смотрел, подсвечены жёлтым.</li>
+        <li><b>Кнопки две:</b> 👀 видно · 🙈 не видно. У «не видно» можно отметить причину,
+          написать пару слов и приложить скрин.</li>
+        <li><b>Модель телефона и тему спрашивать не будем</b> — страница поймёт сама.</li>
+        <li><b>Отправлять ничего не надо.</b> Каждое нажатие сохраняется само.</li>
+      </ul>
+    </div>
+    <div class="card">
+      <label for="build">Какая сборка написана в приложении?</label>
+      <input type="number" id="build" inputmode="numeric" min="1" placeholder="Например, 195">
+      <p class="sub" style="margin:8px 0 0">Профиль или Настройки → «О приложении» → «Сборка».</p>
+    </div>
+    <div class="card">
+      <label>На чём проверяешь</label>
+      <div class="row">
+        <button class="plat" id="pl-ios" type="button">iPhone</button>
+        <button class="plat" id="pl-android" type="button">Android</button>
+      </div>
+    </div>
+    <div class="card">
+      <label>Вход</label>
+      <div id="telegramButton" style="text-align:center">
+<script async src="https://telegram.org/js/telegram-widget.js?22"
+  data-telegram-login="Boo_SupportBot" data-size="large" data-userpic="false"
+  data-radius="12" data-onauth="onTelegramAuth(user)" data-request-access="write"></script></div>
+      <div id="telegramOk" class="authok hidden"></div>
+      <p class="sub" style="margin:10px 0 8px">Или просто ник в Телеграме — чтобы можно было переспросить:</p>
+      <input type="text" id="nick" placeholder="@nickname" autocomplete="username"
+        autocapitalize="off" autocorrect="off" spellcheck="false">
+    </div>
+    <button class="btn primary" id="start" style="width:100%" type="button">Начать</button>
+  </div>
+
+  <div id="updateGate" class="hidden">
+    <div class="card" style="text-align:center">
+      <div style="font-size:40px">🛠</div>
+      <h2 style="margin-top:6px">Квест приходит со сборкой 195</h2>
+      <p class="sub" id="updateText"></p>
+      <a class="btn primary" id="updateLink" href="#" target="_blank" rel="noopener"
+        style="display:block;text-decoration:none">Обновить приложение</a>
+      <button class="btn ghost" id="backToGate" type="button" style="width:100%;margin-top:8px">Проверить номер ещё раз</button>
+    </div>
+  </div>
+
+  <div id="app" class="hidden">
+    <div class="bar">
+      <div class="track"><div class="fill" id="fill"></div></div>
+      <div class="txt"><span id="progress"></span><span id="whoami"></span></div>
+    </div>
+    <div id="list"><p class="sub">Загружаю шаги…</p></div>
+    <p class="device" id="device"></p>
+    <p class="device"><a href="#" id="switch">Сменить вход, сборку или платформу</a></p>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+(function(){
+  var API = 'https://nxabnmciearjxfdrlmpw.supabase.co/functions/v1/qa';
+  var MIN_BUILD = 195;
+  var PROBLEMS = [{"id":"offscreen","label":"Кнопка за краем, под меню или клавиатурой"},{"id":"covered","label":"Бу с облачком закрывает кнопку или текст"},{"id":"unreadable","label":"Облачко плохо читается"},{"id":"unclear","label":"Непонятно, что нажать"},{"id":"not_counted","label":"Шаг не засчитался, нет кристаллов или открытки"}];
+  var state = { nick:'', platform:'', build:null, telegram:null,
+    catalog:[], coverage:{}, answers:{} };
+  var device = detectDevice();
+
+
+  function el(id){ return document.getElementById(id); }
+  function lsGet(k){ try{ return localStorage.getItem(k); }catch(e){ return null; } }
+  function lsSet(k,v){ try{ localStorage.setItem(k,v); return true; }catch(e){ return false; } }
+  function esc(s){ return String(s == null ? '' : s).replace(/[&<>"']/g, function(c){
+    return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
+  function toast(t){ var s = el('toast'); s.textContent = t; s.classList.add('show');
+    clearTimeout(s._t); s._t = setTimeout(function(){ s.classList.remove('show'); }, 1800); }
+
+  function api(p){ return API + p; }
+  function post(path, body){
+    return fetch(api(path), { method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify(body) });
+  }
+
+  // ── Телефон и тема — сами (§3.5: людей не спрашиваем) ─────────────────
+  // Размер экрана в точках → модель iPhone. Safari модель не называет,
+  // а по размеру семейство узнаётся однозначно.
+  var IPHONES = {
+    '320x568':'iPhone SE (1-го поколения)', '375x667':'iPhone SE 2/3, 6–8',
+    '414x736':'iPhone 6–8 Plus', '375x812':'iPhone X/XS/11 Pro/12–13 mini',
+    '414x896':'iPhone XR/XS Max/11/11 Pro Max', '390x844':'iPhone 12–14, 16e',
+    '428x926':'iPhone 12–13 Pro Max, 14 Plus', '393x852':'iPhone 14 Pro, 15, 16',
+    '430x932':'iPhone 14–15 Pro Max, 15–16 Plus', '402x874':'iPhone 16 Pro, 17',
+    '440x956':'iPhone 16–17 Pro Max', '420x912':'iPhone Air'
+  };
+  function iphoneFor(w, h){ return IPHONES[w + 'x' + h] || null; }
+  function detectDevice(){
+    var ua = navigator.userAgent || '';
+    var d = { model:null, os:null, theme:null, themeSource:null, screen:null };
+    var m;
+    if (/iPhone|iPad/.test(ua)){
+      // Safari замораживает версию ОС в строке, а версия Safari идёт
+      // вровень с iOS — берём её, если есть.
+      m = ua.match(/Version\/(\d+)(?:\.(\d+))?/) || ua.match(/OS (\d+)_(\d+)/);
+      if (m) d.os = 'iOS ' + m[1] + (m[2] ? '.' + m[2] : '');
+    } else if ((m = ua.match(/Android (\d+(?:\.\d+)?)/))) {
+      d.os = 'Android ' + m[1];
+    }
+    var w = Math.min(screen.width, screen.height), h = Math.max(screen.width, screen.height);
+    var r = Math.round((window.devicePixelRatio || 1) * 100) / 100;
+    d.screen = w + '×' + h + ' @' + r + 'x';
+    if (/iPhone/.test(ua)) d.model = iphoneFor(w, h) || 'iPhone';
+    else if (/iPad/.test(ua)) d.model = 'iPad';
+    else if (/Android/.test(ua)){
+      m = ua.match(/Android [^;)]*; ([^;)]+)\)/);
+      d.model = (m && m[1].trim() !== 'K') ? m[1].trim() : 'Android';
+    }
+    try{
+      d.theme = matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+      d.themeSource = 'system';
+    }catch(e){}
+    // Если страницу откроет само приложение, оно передаст точные значения.
+    try{
+      var q = new URLSearchParams(location.search);
+      if (q.get('model')) d.model = q.get('model').slice(0, 80);
+      if (q.get('os')) d.os = q.get('os').slice(0, 40);
+      if (q.get('theme') === 'dark' || q.get('theme') === 'light'){ d.theme = q.get('theme'); d.themeSource = 'app'; }
+      if (q.get('build')) lsSet('qa_build', q.get('build'));
+    }catch(e){}
+    // Chrome на Android по запросу отдаёт настоящую модель («Pixel 7»).
+    try{
+      if (navigator.userAgentData && navigator.userAgentData.getHighEntropyValues){
+        navigator.userAgentData.getHighEntropyValues(['model','platformVersion']).then(function(v){
+          if (v.model) d.model = v.model;
+          if (v.platformVersion && /Android/.test(ua)) d.os = 'Android ' + v.platformVersion.split('.')[0];
+          showDevice();
+        }).catch(function(){});
+      }
+    }catch(e){}
+    return d;
+  }
+  function showDevice(){
+    var t = device.theme === 'dark' ? 'тёмная тема' : device.theme === 'light' ? 'светлая тема' : '';
+    el('device').textContent = 'Определилось само: ' +
+      [device.model, device.os, t].filter(Boolean).join(' · ');
+  }
+
+  // ── Вход ──────────────────────────────────────────────────────────────
+  function pickPlatform(p){
+    state.platform = p;
+    el('pl-ios').classList.toggle('on', p === 'ios');
+    el('pl-android').classList.toggle('on', p === 'android');
+  }
+  el('pl-ios').onclick = function(){ pickPlatform('ios'); };
+  el('pl-android').onclick = function(){ pickPlatform('android'); };
+  pickPlatform(lsGet('qa_platform') || (/android/i.test(navigator.userAgent) ? 'android' : 'ios'));
+  if (lsGet('qa_nick')) el('nick').value = '@' + lsGet('qa_nick');
+  if (lsGet('qa_build')) el('build').value = lsGet('qa_build');
+
+  function setTelegram(user, profile){
+    state.telegram = user; state.nick = profile.username;
+    el('nick').value = '@' + profile.username; el('nick').disabled = true;
+    el('telegramButton').classList.add('hidden');
+    el('telegramOk').classList.remove('hidden');
+    el('telegramOk').textContent = 'Вход через Telegram: @' + profile.username + ' ✓';
+    lsSet('qa_telegram', JSON.stringify(user)); lsSet('qa_nick', profile.username);
+  }
+  function clearTelegram(){
+    state.telegram = null; lsSet('qa_telegram', '');
+    el('nick').disabled = false;
+    el('telegramOk').classList.add('hidden'); el('telegramButton').classList.remove('hidden');
+  }
+  window.onTelegramAuth = function(user, replay){
+    post('/telegram-login', {telegram:user}).then(function(r){
+      if (!r.ok) throw new Error('auth'); return r.json();
+    }).then(function(data){ setTelegram(user, data.profile); })
+      .catch(function(){ clearTelegram();
+        if (!replay) toast('Не получилось подтвердить вход — можно по нику'); });
+  };
+  try{ var old = JSON.parse(lsGet('qa_telegram') || 'null'); if (old) window.onTelegramAuth(old, true); }catch(e){}
+
+  function normBuild(raw){
+    var n = parseInt(String(raw || '').trim(), 10);
+    if (!isFinite(n) || n < 1) return null;
+    return n >= 1000 ? n % 1000 : n;
+  }
+  function showUpdateGate(shown){
+    var android = state.platform === 'android';
+    el('updateText').textContent = 'У тебя сборка ' + normBuild(shown) +
+      '. После обновления возвращайся сюда — всё отмеченное останется.';
+    el('updateLink').href = android
+      ? 'https://play.google.com/apps/testing/com.tatevmayasyan.boo'
+      : 'https://testflight.apple.com/join/CJ2njGtB';
+    el('gate').classList.add('hidden'); el('app').classList.add('hidden');
+    el('updateGate').classList.remove('hidden');
+  }
+  el('backToGate').onclick = function(){
+    el('updateGate').classList.add('hidden'); el('gate').classList.remove('hidden');
+  };
+  el('switch').onclick = function(e){ e.preventDefault();
+    el('app').classList.add('hidden'); el('gate').classList.remove('hidden'); };
+
+  el('start').onclick = function(){
+    var shown = el('build').value;
+    var b = normBuild(shown);
+    if (b === null){ el('build').focus(); toast('Нужен номер сборки из приложения'); return; }
+    state.build = parseInt(shown, 10);
+    lsSet('qa_build', String(state.build)); lsSet('qa_platform', state.platform);
+    if (b < MIN_BUILD){ showUpdateGate(shown); return; }
+    var nick = state.telegram ? state.nick : (el('nick').value || '').trim().replace(/^@+/, '');
+    if (nick.length < 2){ el('nick').focus(); toast('Нужен вход или ник'); return; }
+    state.nick = nick; lsSet('qa_nick', nick);
+    el('gate').classList.add('hidden'); el('app').classList.remove('hidden');
+    el('whoami').textContent = '@' + nick;
+    showDevice();
+    load();
+  };
+
+  function who(){
+    var b = { nickname: state.nick, platform: state.platform };
+    if (state.telegram) b.telegram = state.telegram;
+    return b;
+  }
+
+  // ── Шаги ──────────────────────────────────────────────────────────────
+  function load(){
+    Promise.all([
+      post('/quest/steps', {}).then(function(r){ if (!r.ok) throw 0; return r.json(); }),
+      post('/quest/answers', who()).then(function(r){ return r.ok ? r.json() : {answers:{}}; })
+    ]).then(function(res){
+      state.catalog = res[0].catalog; state.coverage = res[0].coverage || {};
+      state.answers = res[1].answers || {};
+      queueApply(); render(); flushQueue();
+    }).catch(function(){
+      el('list').innerHTML = '<div class="card"><p class="sub" style="margin:0">Не получилось загрузить шаги. ' +
+        'Проверь связь и обнови страницу.</p></div>';
+    });
+  }
+  function keyOf(l, s){ return l.id + ':' + s.id; }
+  function total(){ var n = 0; state.catalog.forEach(function(u){ u.levels.forEach(function(l){ n += l.steps.length; }); }); return n; }
+  function progress(){
+    var done = 0; for (var k in state.answers) if (state.answers[k].verdict) done++;
+    var t = total();
+    el('progress').textContent = 'Отмечено ' + done + ' из ' + t;
+    el('fill').style.width = (t ? Math.round(done * 100 / t) : 0) + '%';
+  }
+  function render(){
+    var html = '';
+    state.catalog.forEach(function(u){
+      html += '<h2>' + esc(u.title) + '</h2><div class="card">';
+      u.levels.forEach(function(l){
+        var fresh = l.steps.filter(function(s){ return !state.coverage[keyOf(l, s)]; }).length;
+        html += '<details' + (fresh ? ' open' : '') + '><summary><span>' + esc(l.title) +
+          (l.optional ? ' <span class="pill">необязательный</span>' : '') + '</span>' +
+          (fresh ? '<span class="pill warn">не смотрели: ' + fresh + '</span>' : '<span class="pill ok">все смотрели</span>') +
+          '</summary>';
+        l.steps.forEach(function(s){ html += stepHtml(l, s); });
+        html += '</details>';
+      });
+      html += '</div>';
+    });
+    el('list').innerHTML = html;
+    progress();
+  }
+  function stepHtml(l, s){
+    var k = keyOf(l, s), a = state.answers[k] || {};
+    var fresh = !state.coverage[k];
+    var h = '<div class="step' + (fresh ? ' fresh' : '') + '" data-key="' + esc(k) + '">';
+    h += '<h3>' + esc(s.title) + (s.showOnly ? ' <span class="pill">совет</span>' : '') +
+      (fresh ? ' <span class="pill warn">ещё никто не смотрел</span>' : '') + '</h3>';
+    h += '<p class="where">Где: ' + esc(s.path) + '</p>';
+    h += '<p class="says">Бу говорит: «' + esc(s.booLine) + '»</p>';
+    h += '<div class="verdict">' +
+      '<button type="button" class="vbtn' + (a.verdict === 'seen' ? ' on-seen' : '') + '" data-v="seen">👀 Видно</button>' +
+      '<button type="button" class="vbtn' + (a.verdict === 'not_seen' ? ' on-not_seen' : '') + '" data-v="not_seen">🙈 Не видно</button></div>';
+    var open = a.verdict === 'not_seen' || a.comment || a.hasShot;
+    h += '<div class="more' + (open ? '' : ' hidden') + '">';
+    if (a.verdict === 'not_seen'){
+      h += '<div class="chips">' + PROBLEMS.map(function(p){
+        var on = (a.problems || []).indexOf(p.id) >= 0;
+        return '<button type="button" class="chip' + (on ? ' on' : '') + '" data-p="' + p.id + '">' + esc(p.label) + '</button>';
+      }).join('') + '</div>';
+    }
+    h += '<textarea autocapitalize="sentences" placeholder="Пара слов: что именно не так (можно пропустить)">' +
+      esc(a.comment || '') + '</textarea>';
+    h += '<div class="shot"><label>📷 ' + (a.hasShot ? 'Заменить скрин' : 'Приложить скрин') +
+      '<input type="file" accept="image/*"></label><span class="st">' + (a.hasShot ? 'Скрин сохранён ✓' : '') + '</span></div>';
+    h += '</div>';
+    if (!open && a.verdict === 'seen') h += '<button type="button" class="btn ghost small addmore" style="margin-top:6px">+ комментарий или скрин</button>';
+    return h + '</div>';
+  }
+  function findStep(k){
+    var parts = k.split(':');
+    return { levelId: parts[0], stepId: parts.slice(1).join(':') };
+  }
+
+  el('list').addEventListener('click', function(e){
+    var box = e.target.closest('.step'); if (!box) return;
+    var k = box.getAttribute('data-key');
+    var a = state.answers[k] || (state.answers[k] = { verdict:'', problems:[], comment:'' });
+    var v = e.target.closest('.vbtn');
+    if (v){
+      a.verdict = v.getAttribute('data-v');
+      if (a.verdict === 'seen') a.problems = [];
+      save(k); rerender(box, k); return;
+    }
+    var c = e.target.closest('.chip');
+    if (c){
+      var p = c.getAttribute('data-p'), i = a.problems.indexOf(p);
+      if (i >= 0) a.problems.splice(i, 1); else a.problems.push(p);
+      save(k); c.classList.toggle('on'); return;
+    }
+    if (e.target.closest('.addmore')){ a.forceOpen = true; rerender(box, k); }
+  });
+  function rerender(box, k){
+    var t = document.createElement('div');
+    var ref = findStep(k), l = null, s = null;
+    state.catalog.forEach(function(u){ u.levels.forEach(function(ll){ if (ll.id === ref.levelId){ l = ll;
+      ll.steps.forEach(function(ss){ if (ss.id === ref.stepId) s = ss; }); } }); });
+    if (!l || !s) return;
+    t.innerHTML = stepHtml(l, s);
+    var nb = t.firstChild;
+    if (state.answers[k] && state.answers[k].forceOpen) nb.querySelector('.more').classList.remove('hidden');
+    var add = nb.querySelector('.addmore'); if (add && state.answers[k].forceOpen) add.remove();
+    box.replaceWith(nb); progress();
+  }
+  var commentTimers = {};
+  el('list').addEventListener('input', function(e){
+    if (e.target.tagName !== 'TEXTAREA') return;
+    var k = e.target.closest('.step').getAttribute('data-key');
+    var a = state.answers[k]; if (!a) return;
+    a.comment = e.target.value;
+    clearTimeout(commentTimers[k]);
+    commentTimers[k] = setTimeout(function(){ if (a.verdict) save(k); }, 900);
+  });
+  el('list').addEventListener('change', function(e){
+    if (e.target.type !== 'file' || !e.target.files || !e.target.files[0]) return;
+    var box = e.target.closest('.step'), k = box.getAttribute('data-key');
+    var a = state.answers[k]; var st = box.querySelector('.shot .st');
+    if (!a || !a.verdict){ toast('Сначала «видно» или «не видно»'); return; }
+    st.textContent = 'Сжимаю…';
+    shrink(e.target.files[0]).then(function(shot){
+      save(k, shot); st.textContent = 'Скрин прикреплён';
+    }).catch(function(){ st.textContent = 'Не получилось прочитать картинку'; });
+  });
+
+  // Скрин: ужать до 1600px JPEG и заодно понять тему приложения по яркости
+  // (скрин — это само приложение, а тема системы может с ним не совпадать)
+  // и модель iPhone по размеру в пикселях, если страница открыта не с него.
+  function shrink(file){
+    return new Promise(function(resolve, reject){
+      var url = URL.createObjectURL(file), img = new Image();
+      img.onload = function(){
+        var W = img.naturalWidth, H = img.naturalHeight;
+        var k = Math.min(1, 1600 / Math.max(W, H));
+        var c = document.createElement('canvas');
+        c.width = Math.round(W * k); c.height = Math.round(H * k);
+        var ctx = c.getContext('2d'); ctx.drawImage(img, 0, 0, c.width, c.height);
+        try{
+          var px = ctx.getImageData(0, 0, c.width, c.height).data, sum = 0, n = 0;
+          for (var i = 0; i < px.length; i += 4 * 97){ sum += 0.2126*px[i] + 0.7152*px[i+1] + 0.0722*px[i+2]; n++; }
+          var lum = n ? sum / n / 255 : 0.5;
+          if (lum < 0.35){ device.theme = 'dark'; device.themeSource = 'screenshot'; }
+          else if (lum > 0.6){ device.theme = 'light'; device.themeSource = 'screenshot'; }
+        }catch(e){}
+        if (!/iPhone|Android/.test(navigator.userAgent)){
+          var w = Math.min(W, H), h = Math.max(W, H);
+          var guess = iphoneFor(w / 3, h / 3) || iphoneFor(w / 2, h / 2);
+          if (guess){ device.model = guess; device.screen = w + '×' + h + ' px (скрин)'; }
+        }
+        showDevice();
+        URL.revokeObjectURL(url);
+        resolve({ mime:'image/jpeg', data: c.toDataURL('image/jpeg', 0.75) });
+      };
+      img.onerror = function(){ URL.revokeObjectURL(url); reject(); };
+      img.src = url;
+    });
+  }
+
+  // ── Сохранение с честной очередью ─────────────────────────────────────
+  // Нет связи — ответ ложится в localStorage и уходит сам на возврате
+  // связи, вкладки и по таймеру. Отказ по сборке (409) очередь не спасёт.
+  var QKEY = 'qq_queue_v1';
+  function qRead(){ try{ return JSON.parse(lsGet(QKEY) || '[]') || []; }catch(e){ return []; } }
+  function qWrite(q){ return lsSet(QKEY, JSON.stringify(q.slice(-60))); }
+  function payloadFor(k, shot){
+    var a = state.answers[k], ref = findStep(k), p = who();
+    p.levelId = ref.levelId; p.stepId = ref.stepId; p.verdict = a.verdict;
+    p.problems = a.problems || []; p.comment = a.comment || '';
+    p.deviceBuild = state.build; p.device = device;
+    if (shot) p.shot = shot;
+    return p;
+  }
+  function save(k, shot){
+    var p = payloadFor(k, shot);
+    send(p).then(function(res){
+      if (res === 'ok'){ toast('Сохранено'); state.coverage[k] = state.coverage[k] || 1;
+        if (shot) state.answers[k].hasShot = true; return; }
+      if (res === 'stale'){ showUpdateGate(state.build); return; }
+      if (res === 'bad'){ toast('Сервер не принял ответ — обнови страницу'); return; }
+      queuePut(p);
+    });
+  }
+  function send(p){
+    return post('/quest/save', p).then(function(r){
+      if (r.ok) return 'ok';
+      if (r.status === 409) return 'stale';
+      // Подпись Telegram живёт сутки. Протухла — отправляем тем же ответом
+      // по нику, а не держим его в очереди вечно.
+      if (r.status === 401 && p.telegram){ clearTelegram(); delete p.telegram; return send(p); }
+      return r.status >= 400 && r.status < 500 ? 'bad' : 'offline';
+    }).catch(function(){ return 'offline'; });
+  }
+  function queuePut(p){
+    var q = qRead().filter(function(x){ return !(x.levelId === p.levelId && x.stepId === p.stepId && x.platform === p.platform); });
+    q.push(p);
+    if (!qWrite(q)){ delete p.shot; q[q.length - 1] = p; qWrite(q);
+      toast('Нет связи. Ответ уйдёт сам, скрин приложи ещё раз потом'); return; }
+    toast('Нет связи — ответ уйдёт сам');
+  }
+  // Ответы из очереди видны на экране сразу, ещё до отправки.
+  function queueApply(){
+    qRead().forEach(function(p){
+      if (p.platform !== state.platform) return;
+      var k = p.levelId + ':' + p.stepId;
+      state.answers[k] = { verdict:p.verdict, problems:p.problems || [], comment:p.comment || '',
+        hasShot: !!(state.answers[k] && state.answers[k].hasShot) };
+    });
+  }
+  var flushing = false;
+  function flushQueue(){
+    var q = qRead(); if (flushing || !q.length) return;
+    flushing = true;
+    send(q[0]).then(function(res){
+      flushing = false;
+      if (res === 'offline') return;
+      qWrite(qRead().slice(1));
+      if (res === 'stale') showUpdateGate(state.build);
+      flushQueue();
+    });
+  }
+  window.addEventListener('online', flushQueue);
+  document.addEventListener('visibilitychange', function(){ if (!document.hidden) flushQueue(); });
+  setInterval(flushQueue, 20000);
+})();
+</script>
+</body>
+</html>

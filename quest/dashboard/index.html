@@ -1,0 +1,252 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Квест глазами · дашборд</title>
+<style>
+
+  /* Цвета проверены на контраст скриптом (WCAG AA 4.5 для мелких
+     плашек), обе темы: акцент/жёлтый в светлой затемнены, на акцентной
+     кнопке в тёмной — тёмный текст. */
+  :root{
+    --bg:#F6F1E7; --card:#FFFDF8; --ink:#2E2A25; --muted:#6F675D;
+    --line:#E7DECF; --accent:#A8431E; --on-accent:#FFFFFF; --accent-soft:rgba(228,120,79,.12);
+    --ok:#3F6A3A; --ok-soft:rgba(127,163,122,.16); --warn:#7A560C;
+    --warn-soft:rgba(201,162,39,.16); --radius:18px;
+    --shadow:0 2px 10px rgba(60,48,32,.06);
+  }
+  @media (prefers-color-scheme: dark){
+    :root{ --bg:#1D1B18; --card:#26231F; --ink:#F1EBE1; --muted:#B3A99C;
+      --line:#39342D; --accent:#F0936B; --on-accent:#1D1B18; --accent-soft:rgba(240,147,107,.16);
+      --ok:#9CC496; --ok-soft:rgba(156,196,150,.14); --warn:#E0BE4A;
+      --warn-soft:rgba(224,190,74,.14); --shadow:0 2px 10px rgba(0,0,0,.3); }
+  }
+  *{box-sizing:border-box}
+  button{color:var(--ink);font-family:inherit}
+  html{-webkit-text-size-adjust:100%}
+  body{margin:0;background:var(--bg);color:var(--ink);font-style:normal;
+    font:16px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left)}
+  em,i{font-style:normal;font-weight:600}
+  .wrap{max-width:760px;margin:0 auto;padding:16px 16px 80px}
+  h1{font-size:22px;margin:0 0 4px;line-height:1.25}
+  h2{font-size:19px;margin:22px 0 10px}
+  .sub{color:var(--muted);font-size:14px;margin:0 0 14px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);
+    padding:16px;margin-bottom:12px;box-shadow:var(--shadow)}
+  label{display:block;font-weight:600;margin-bottom:8px}
+  input[type=text],input[type=number],textarea,select{width:100%;padding:13px;
+    border:1px solid var(--line);border-radius:14px;background:var(--bg);color:var(--ink);
+    font-size:16px;font-family:inherit}
+  textarea{min-height:80px;resize:vertical}
+  .row{display:flex;gap:10px;flex-wrap:wrap}
+  .btn{flex:1;min-width:120px;min-height:48px;padding:13px 12px;border-radius:14px;
+    border:1px solid var(--line);background:var(--card);color:var(--ink);font-size:16px;
+    font-weight:600;cursor:pointer;-webkit-tap-highlight-color:transparent}
+  .btn.primary{background:var(--accent);color:var(--on-accent);border-color:transparent}
+  .btn.ghost{background:transparent;color:var(--muted)}
+  .btn.small{flex:0 0 auto;min-width:0;min-height:40px;padding:8px 14px;font-size:14px}
+  .plat{flex:1;min-height:52px;padding:14px;border-radius:14px;border:2px solid var(--line);
+    background:var(--card);font-size:17px;font-weight:600;cursor:pointer}
+  .plat.on{border-color:var(--accent);background:var(--accent-soft)}
+  .hidden{display:none !important}
+  .pill{display:inline-block;font-size:12px;font-weight:700;border-radius:999px;
+    padding:2px 9px;border:1px solid var(--line);color:var(--muted);white-space:nowrap}
+  .pill.warn{border-color:var(--warn);color:var(--warn);background:var(--warn-soft)}
+  .pill.bad{border-color:var(--accent);color:var(--accent);background:var(--accent-soft)}
+  .pill.ok{border-color:var(--ok);color:var(--ok);background:var(--ok-soft)}
+  .toast{position:fixed;left:50%;transform:translateX(-50%);bottom:20px;background:var(--ink);
+    color:var(--bg);padding:10px 18px;border-radius:999px;font-size:14px;opacity:0;
+    transition:opacity .2s ease;pointer-events:none;z-index:10;max-width:90vw;text-align:center}
+  .toast.show{opacity:.94}
+  .authok{padding:12px;border-radius:12px;background:var(--ok-soft);text-align:center;font-weight:600}
+  details{border-top:1px solid var(--line)}
+  details:first-of-type{border-top:0}
+  summary{cursor:pointer;list-style:none;padding:12px 0;font-weight:600;display:flex;
+    gap:8px;align-items:center;justify-content:space-between}
+  summary::-webkit-details-marker{display:none}
+  a{color:var(--accent)}
+
+  .wrap{max-width:960px}
+  .kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-bottom:12px}
+  .kpi{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px}
+  .kpi b{display:block;font-size:26px;line-height:1.1;font-variant-numeric:tabular-nums}
+  .kpi span{font-size:13px;color:var(--muted)}
+  .kpi.bad b{color:var(--accent)} .kpi.warn b{color:var(--warn)} .kpi.ok b{color:var(--ok)}
+  @media (max-width:560px){ .kpis{grid-template-columns:repeat(2,minmax(0,1fr))} }
+  .cover{height:10px;background:var(--line);border-radius:999px;overflow:hidden;margin:4px 0 6px}
+  .cover div{height:100%;background:var(--ok)}
+  .tools{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:12px}
+  .tools select{width:auto;min-width:180px;padding:9px 12px}
+  .tools .upd{font-size:13px;color:var(--muted);margin-left:auto}
+  .srow{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px;padding:10px 0;
+    border-top:1px solid var(--line);align-items:start}
+  .srow:first-child{border-top:0}
+  .srow .t{font-weight:600}
+  .srow .p{font-size:13px;color:var(--muted)}
+  .nums{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
+  .rep{margin:8px 0 0;padding:10px;border-radius:12px;background:var(--accent-soft);font-size:14px}
+  .rep .meta{font-size:13px;color:var(--muted);margin-bottom:4px}
+  .rep img{display:block;max-width:180px;max-height:320px;border-radius:10px;margin-top:8px;border:1px solid var(--line)}
+  .uncov li{margin-bottom:4px}
+  .lvl{font-size:15px;margin:14px 0 4px;color:var(--muted);font-weight:600}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Квест глазами — дашборд</h1>
+  <p class="sub">Покрытие альфа-проверки: каждый шаг должен посмотреть хотя бы один человек.
+    Данные живые, обновляются сами раз в минуту.</p>
+
+  <div id="login" class="card hidden">
+    <label>Вход для Таты</label>
+    <p class="sub">В отчётах ники, комментарии и скрины, поэтому только через Telegram.</p>
+    <div id="telegramButton" style="text-align:center">
+<script async src="https://telegram.org/js/telegram-widget.js?22"
+  data-telegram-login="Boo_SupportBot" data-size="large" data-userpic="false"
+  data-radius="12" data-onauth="onTelegramAuth(user)" data-request-access="write"></script></div>
+    <p class="sub" id="loginMsg" style="margin:10px 0 0"></p>
+  </div>
+
+  <div id="app" class="hidden">
+    <div class="tools">
+      <select id="minBuild" aria-label="С какой сборки считать"></select>
+      <button class="btn small" id="refresh" type="button">Обновить</button>
+      <span class="upd" id="upd"></span>
+    </div>
+    <div class="kpis" id="kpis"></div>
+    <div class="card" id="uncovered"></div>
+    <div id="tree"></div>
+    <div id="orphans"></div>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+(function(){
+  var API = 'https://nxabnmciearjxfdrlmpw.supabase.co/functions/v1/qa';
+  var MIN_BUILD = 195;
+  var PROBLEMS = {"offscreen":"Кнопка за краем, под меню или клавиатурой","covered":"Бу с облачком закрывает кнопку или текст","unreadable":"Облачко плохо читается","unclear":"Непонятно, что нажать","not_counted":"Шаг не засчитался, нет кристаллов или открытки"};
+  var telegram = null, minBuild = MIN_BUILD;
+
+
+  function el(id){ return document.getElementById(id); }
+  function lsGet(k){ try{ return localStorage.getItem(k); }catch(e){ return null; } }
+  function lsSet(k,v){ try{ localStorage.setItem(k,v); return true; }catch(e){ return false; } }
+  function esc(s){ return String(s == null ? '' : s).replace(/[&<>"']/g, function(c){
+    return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
+  function toast(t){ var s = el('toast'); s.textContent = t; s.classList.add('show');
+    clearTimeout(s._t); s._t = setTimeout(function(){ s.classList.remove('show'); }, 1800); }
+
+  function pad(n){ return (n < 10 ? '0' : '') + n; }
+  function when(iso){
+    if (!iso) return '';
+    var d = new Date(iso);
+    return pad(d.getDate()) + '.' + pad(d.getMonth() + 1) + ' ' + pad(d.getHours()) + ':' + pad(d.getMinutes());
+  }
+
+  function showLogin(msg){
+    el('app').classList.add('hidden'); el('login').classList.remove('hidden');
+    el('loginMsg').textContent = msg || '';
+  }
+  window.onTelegramAuth = function(user){
+    telegram = user; lsSet('qa_dash_telegram', JSON.stringify(user)); load();
+  };
+
+  function load(){
+    if (!telegram){ showLogin(''); return; }
+    fetch(API + '/quest/dashboard', { method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ telegram: telegram, minBuild: minBuild }) })
+      .then(function(r){
+        if (r.status === 401){ telegram = null; lsSet('qa_dash_telegram', '');
+          showLogin('Вход устарел (Telegram держит его сутки) — войди ещё раз.'); return null; }
+        if (r.status === 403) return r.json().then(function(j){
+          showLogin('Этот Telegram (id ' + j.tgId + ') не в списке тех, кому можно смотреть.'); return null; });
+        if (!r.ok) throw new Error('http ' + r.status);
+        return r.json();
+      })
+      .then(function(d){ if (d) render(d); })
+      .catch(function(){ toast('Не получилось обновить — попробую через минуту'); });
+  }
+
+  function render(d){
+    el('login').classList.add('hidden'); el('app').classList.remove('hidden');
+    el('upd').textContent = 'Обновлено ' + when(new Date().toISOString());
+    var builds = d.builds.filter(function(b){ return b >= MIN_BUILD; });
+    if (builds.indexOf(MIN_BUILD) < 0) builds.unshift(MIN_BUILD);
+    el('minBuild').innerHTML = builds.map(function(b){
+      return '<option value="' + b + '"' + (b === d.minBuild ? ' selected' : '') + '>' +
+        (b === MIN_BUILD ? 'Все сборки с квестом (≥ ' + b + ')' : 'Со сборки ' + b) + '</option>';
+    }).join('');
+
+    var t = d.totals, pct = t.steps ? Math.round(t.covered * 100 / t.steps) : 0;
+    el('kpis').innerHTML =
+      kpi(t.covered + ' из ' + t.steps, 'шагов проверено', t.uncovered ? '' : 'ok') +
+      kpi(t.uncovered, 'никто ещё не смотрел', t.uncovered ? 'warn' : 'ok') +
+      kpi(t.withNotSeen, 'шагов с «не видно»', t.withNotSeen ? 'bad' : 'ok') +
+      kpi(t.people, plural(t.people, 'человек проверяет', 'человека проверяют', 'человек проверяют'), '');
+
+    var unc = [];
+    d.universes.forEach(function(u){ u.levels.forEach(function(l){ l.steps.forEach(function(s){
+      if (!s.people) unc.push(esc(u.title) + ' › ' + esc(l.title) + ' › <b>' + esc(s.title) + '</b>');
+    }); }); });
+    el('uncovered').innerHTML = '<label>Покрытие ' + pct + '%</label>' +
+      '<div class="cover"><div style="width:' + pct + '%"></div></div>' +
+      (unc.length
+        ? '<p class="sub" style="margin:8px 0 6px">Никто ещё не проверил (' + unc.length + '):</p><ul class="uncov" style="margin:0;padding-left:18px">' +
+          unc.map(function(x){ return '<li>' + x + '</li>'; }).join('') + '</ul>'
+        : '<p class="sub" style="margin:8px 0 0">Каждый шаг посмотрел хотя бы один человек.</p>');
+
+    el('tree').innerHTML = d.universes.map(function(u){
+      return '<h2>' + esc(u.title) + '</h2><div class="card">' + u.levels.map(function(l){
+        return '<div class="lvl">' + esc(l.title) + (l.optional ? ' · необязательный' : '') + '</div>' +
+          l.steps.map(stepRow).join('');
+      }).join('') + '</div>';
+    }).join('');
+
+    el('orphans').innerHTML = d.orphans.length
+      ? '<div class="card"><label>Ответы на шаги, которых больше нет в каталоге</label><p class="sub" style="margin:0">' +
+        d.orphans.map(function(o){ return esc(o.key) + ' — ' + o.people; }).join(' · ') + '</p></div>'
+      : '';
+  }
+  function plural(n, one, few, many){
+    var m10 = n % 10, m100 = n % 100;
+    if (m10 === 1 && m100 !== 11) return one;
+    if (m10 >= 2 && m10 <= 4 && (m100 < 12 || m100 > 14)) return few;
+    return many;
+  }
+  function kpi(v, label, cls){
+    return '<div class="kpi ' + cls + '"><b>' + v + '</b><span>' + label + '</span></div>';
+  }
+  function stepRow(s){
+    var nums = s.people
+      ? '<span class="pill ok">проверили: ' + s.people + '</span>' +
+        '<span class="pill">iPhone ' + s.ios + ' · Android ' + s.android + '</span>' +
+        (s.notSeen ? '<span class="pill bad">не видно: ' + s.notSeen + '</span>' : '')
+      : '<span class="pill warn">никто не смотрел</span>';
+    var last = s.lastAt ? 'последняя проверка ' + when(s.lastAt) + ', сборка ' + s.lastBuild : '';
+    return '<div class="srow"><div><div class="t">' + esc(s.title) + (s.showOnly ? ' <span class="pill">совет</span>' : '') +
+      '</div><div class="p">' + esc(s.path) + (last ? ' · ' + last : '') + '</div>' +
+      s.reports.map(report).join('') + '</div><div class="nums">' + nums + '</div></div>';
+  }
+  function report(r){
+    var theme = r.theme === 'dark' ? 'тёмная' : r.theme === 'light' ? 'светлая' : '';
+    var probs = (r.problems || []).map(function(p){ return PROBLEMS[p] || p; });
+    return '<div class="rep"><div class="meta">@' + esc(r.who) + ' · ' + esc(r.device) +
+      (theme ? ' · ' + theme : '') + ' · сборка ' + r.build + ' · ' + when(r.at) + '</div>' +
+      (probs.length ? '<div>' + probs.map(esc).join(' · ') + '</div>' : '') +
+      (r.comment ? '<div>' + esc(r.comment) + '</div>' : '') +
+      (r.shotUrl ? '<a href="' + esc(r.shotUrl) + '" target="_blank" rel="noopener"><img src="' + esc(r.shotUrl) + '" alt="Скрин"></a>' : '') +
+      '</div>';
+  }
+
+  el('minBuild').onchange = function(){ minBuild = parseInt(this.value, 10) || MIN_BUILD; load(); };
+  el('refresh').onclick = load;
+  try{ telegram = JSON.parse(lsGet('qa_dash_telegram') || 'null'); }catch(e){ telegram = null; }
+  load();
+  setInterval(function(){ if (!document.hidden) load(); }, 60000);
+})();
+</script>
+</body>
+</html>
