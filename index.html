@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Альфа-тест Бу · сборка 200</title>
+<title>Альфа-тест Бу · сборка 202</title>
 <style>
   :root{
     --bg:#F6F1E7; --card:#FFFDF8; --ink:#2E2A25; --muted:#8A8177;
@@ -147,8 +147,8 @@
 <div class="wrap">
 
   <div id="gate">
-    <h1>Альфа-тест сборки 200</h1>
-    <p class="sub">Маршрут из 31 городов. Один город — четыре-пять
+    <h1>Альфа-тест сборки 202</h1>
+    <p class="sub">Маршрут из 14 городов. Один город — четыре-пять
        вопросов, минут пять. Можно пройти один и уйти, можно все.</p>
     <div class="card">
       <label>Как это устроено</label>
@@ -207,7 +207,7 @@
   <div id="updateGate" class="hidden">
     <div class="card update">
       <div class="em">🛠</div><h2>Сначала обновись</h2>
-      <p class="sub" id="updateText">Этот маршрут собран для сборки 200.</p>
+      <p class="sub" id="updateText">Этот маршрут собран для сборки 202.</p>
       <a class="btn primary" id="updateLink" href="#" target="_blank" rel="noopener">Обновить приложение</a>
       <button class="btn ghost" id="backToGate" style="width:100%;margin-top:8px">Проверить номер ещё раз</button>
     </div>
@@ -458,8 +458,8 @@
     var build = normalizedBuild(shownBuild);
     var android = state.platform === 'android';
     el('updateText').textContent = build === null
-      ? 'Маршрут собран для сборки 200. Обнови приложение и вернись сюда.'
-      : 'У тебя сборка ' + build + ', а маршрут — для 200. После обновления возвращайся сюда.';
+      ? 'Маршрут собран для сборки 202. Обнови приложение и вернись сюда.'
+      : 'У тебя сборка ' + build + ', а маршрут — для 202. После обновления возвращайся сюда.';
     el('updateLink').href = android
       ? 'https://play.google.com/apps/testing/com.tatevmayasyan.boo'
       : 'https://testflight.apple.com/join/CJ2njGtB';
@@ -473,7 +473,7 @@
     var shownBuild = parseInt(el('build').value, 10);
     var build = normalizedBuild(shownBuild);
     if (build === null){ el('build').focus(); toast('Напиши номер сборки из приложения'); return; }
-    if (build < 200){
+    if (build < 202){
       state.deviceBuild = shownBuild;
       showUpdateGate(shownBuild);
       return;
